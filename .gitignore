@@ -1,0 +1,37 @@
+# Local .terraform directories
+**/.terraform/*
+.terraform.lock.hcl
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+
+# Ignore override files as they are usually used to override resources locally and so
+# are not checked in
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+# example: *tfplan*
+
+.idea
+.idea/*
+.vscode
+.vscode/
+*.iml
+*.zip
+.DS_Store
+
+# NessusBurp Install files are too large to commit
+**/nessusburp/*.exe
+**/nessusburp/*.msi
+**/nessusburp/*.txt
+
+# Ansible
+*.pub
+*.ppk

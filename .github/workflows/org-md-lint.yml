@@ -1,0 +1,12 @@
+name: Markdown Lint
+on:
+    pull_request:
+      paths:
+        - '**.md'
+      branches:
+        - main
+    workflow_call:
+
+jobs:
+  check-markdown:
+    uses: Coalfire-CF/Actions/.github/workflows/org-markdown-lint.yml@main

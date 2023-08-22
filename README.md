@@ -128,38 +128,29 @@ module "core_sa" {
 ```
 
 <!-- BEGIN_TF_DOCS -->
-
-ALLOW TERRAFORM MARKDOWN GITHUB ACTION TO POPULATE THE BELOW
-
 ## Requirements
 
 No requirements.
 
 ## Providers
 
-| Name | Version |
-|------|---------|
+No providers.
 
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
+No modules.
 
 ## Resources
 
-| Name | Type |
-|------|------|
+No resources.
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+No inputs.
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-
+No outputs.
 <!-- END_TF_DOCS -->
 
 ## Contributing

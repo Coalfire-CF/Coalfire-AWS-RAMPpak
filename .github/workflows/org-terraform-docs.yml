@@ -1,0 +1,8 @@
+name: Org Terraform Docs
+on:
+    pull_request:
+    workflow_call:
+
+jobs:
+  terraform-docs:
+    uses: Coalfire-CF/Actions/.github/workflows/org-terraform-docs.yml@main

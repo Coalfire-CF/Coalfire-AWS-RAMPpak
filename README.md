@@ -5,24 +5,24 @@
 
 # Coalfire pak README Template
 
-## Repository Title
+## Coalfire AWS RAMPpak
 
-Include the name of the Repository as the header above e.g. `ACE-Cloud-Service`
 
 ## Dependencies
 
-List any dependencies here. E.g. security-core, region-setup
+- security-core
+- account-setup
 
 ## Resource List
 
 Insert a high-level list of resources created as a part of this module. E.g.
 
-- Storage Account
-- Containers
-- Storage share
-- Lifecycle policy
-- CMK key and Iam Role Assignment
-- Monitor diagnostic setting
+- AWS Organizations
+- AWS Config
+- AWS Backups
+- AWS Cloudtrail
+- AWS GuardDuty
+- AWS Security Hub
 
 ## Code Updates
 
@@ -30,34 +30,6 @@ If applicable, add here. For example, updating variables, updating `tstate.tf`, 
 
 `tstate.tf` Update to the appropriate version and storage accounts, see sample
 
-``` hcl
-terraform {
-  required_version = ">= 1.1.7"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.45.0"
-    }
-  }
-  backend "azurerm" {
-    resource_group_name  = "prod-mp-core-rg"
-    storage_account_name = "prodmpsatfstate"
-    container_name       = "tfstatecontainer"
-    environment          = "usgovernment"
-    key                  = "ad.tfstate"
-  }
-}
-```
-
-Change directory to the `active-directory` folder
-
-Run `terraform init` to download modules and create initial local state file.
-
-Run `terraform plan` to ensure no errors and validate plan is deploying expected resources.
-
-Run `terraform apply` to deploy infrastructure.
-
-Update the `remote-data.tf` file to add the security state key
 
 ``` hcl
 

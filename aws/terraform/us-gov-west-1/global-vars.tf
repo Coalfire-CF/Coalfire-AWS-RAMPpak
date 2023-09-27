@@ -22,7 +22,7 @@ locals {
 
 variable "resource_prefix" {
   type        = string
-  default     = "AWS-RAMPpak"
+  default     = "ooc"
   description = "A prefix that should be attached to the names of resources"
 }
 

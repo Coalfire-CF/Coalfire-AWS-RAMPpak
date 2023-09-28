@@ -1,0 +1,7 @@
+---
+
+- name: "SECTION | 1.1.x | Linux Hosts Specific Configuration"
+  import_tasks: cis_1.1.x.yml
+
+- name: "SECTION | 1.2.x | General Configuration"
+  import_tasks: cis_1.2.x.yml

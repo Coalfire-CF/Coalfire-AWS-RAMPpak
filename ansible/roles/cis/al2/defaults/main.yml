@@ -1,0 +1,541 @@
+---
+
+# Disable/Enable whole sections (Default is for all)
+amazon2cis_section1: true
+amazon2cis_section2: true
+amazon2cis_section3: true
+amazon2cis_section4: true
+amazon2cis_section5: true
+amazon2cis_section6: true
+
+# 5.7 Group to be used for su
+# this group needs to exists groups will not be created for remediation this is considered sys admins
+# amazon2cis_sugroup: sugroup
+
+## Python Binary
+## This is used for python3 Installations where python2 OS modules are used in ansible
+python2_bin: /bin/python2.7
+
+## Benchmark name used by audting control role
+# The audit variable found at the base
+benchmark: AMAZON2-CIS
+
+# If set true uses the tmp.mount service else using fstab configuration
+amazon2cis_tmp_svc: true
+
+### Goss Audit run settings
+# Goss audit configuration settings at bottom of file
+
+setup_audit: false
+# How to retrive goss
+# Options are copy or download - detailed settings at the bottom of this file
+# you will need to access to either github or the file already dowmloaded
+get_goss_file: download
+
+# how to get audit files onto host options
+# options are git/copy/get_url
+audit_content: git
+
+# Timeout for those cmds that take longer to run where timeout set
+audit_cmd_timeout: 30000
+
+# enable audits to run - this  runs the audit and get the latest content
+run_audit: false
+### End Goss enablements ####
+
+# Change to false if using EFI boot changes 1.1.1.4 to stop vfat
+amazon2cis_legacy_boot: true
+
+# Enable/Disable SELinux
+amazon2cis_selinux_disable: true  # Coalfire Edits: Using Trend DSM instead of SELinux
+amazon2cis_selinux_state: enforcing
+
+# Misc. environment variables
+amazon2cis_skip_for_travis: false
+amazon2cis_system_is_container: false
+system_is_ec2: true
+
+# These variables correspond with the CIS rule IDs or paragraph numbers defined in
+# the CIS benchmark documents.
+# PLEASE NOTE: These work in coordination with the section # group variables and tags.
+# You must enable an entire section in order for the variables below to take effect.
+# Section 1 rules
+# Section 1 is Initial Setup (Filesystem Configuration, Configure Software Updates, Configure Sudo, Filesystem Integrity Checking, Secure Boot Settings, Additional Process Hardening, Mandatory Access Control, and Warning Banners)
+amazon2cis_rule_1_1_1_1: true
+amazon2cis_rule_1_1_1_2: true
+amazon2cis_rule_1_1_1_3: true
+amazon2cis_rule_1_1_2: true
+amazon2cis_rule_1_1_3: false # Packer and Terraform need exec perms on /tmp
+amazon2cis_rule_1_1_4: true
+amazon2cis_rule_1_1_5: true
+amazon2cis_rule_1_1_6: true
+amazon2cis_rule_1_1_7: true
+amazon2cis_rule_1_1_8: true
+amazon2cis_rule_1_1_9: true
+amazon2cis_rule_1_1_10: true
+amazon2cis_rule_1_1_11: true
+amazon2cis_rule_1_1_12: true
+amazon2cis_rule_1_1_13: true
+amazon2cis_rule_1_1_14: true
+amazon2cis_rule_1_1_15: true
+amazon2cis_rule_1_1_16: true
+amazon2cis_rule_1_1_17: true
+amazon2cis_rule_1_1_18: true
+amazon2cis_rule_1_1_19: true
+amazon2cis_rule_1_1_20: true
+amazon2cis_rule_1_1_21: true
+amazon2cis_rule_1_1_22: true
+amazon2cis_rule_1_1_23: true
+amazon2cis_rule_1_1_24: true
+amazon2cis_rule_1_2_1: true
+amazon2cis_rule_1_2_2: true
+amazon2cis_rule_1_2_3: true
+amazon2cis_rule_1_3_1: false # Coalfire Edits: Using Trend DSM for file integrity
+amazon2cis_rule_1_3_2: false # Coalfire Edits: Using Trend DSM for file integrity
+amazon2cis_rule_1_4_1: true
+amazon2cis_rule_1_4_2: true
+amazon2cis_rule_1_5_1: true
+amazon2cis_rule_1_5_2: true
+amazon2cis_rule_1_5_3: true
+amazon2cis_rule_1_5_4: true
+amazon2cis_rule_1_6_1_1: true
+amazon2cis_rule_1_6_1_2: true
+amazon2cis_rule_1_6_1_3: true
+amazon2cis_rule_1_6_1_4: true
+amazon2cis_rule_1_6_1_5: false # Coalfire Edits: Not using SELinux
+amazon2cis_rule_1_6_1_6: true
+amazon2cis_rule_1_6_1_7: true
+amazon2cis_rule_1_6_1_8: true
+amazon2cis_rule_1_7_1: true
+amazon2cis_rule_1_7_2: true
+amazon2cis_rule_1_7_3: true
+amazon2cis_rule_1_7_4: true
+amazon2cis_rule_1_7_5: true
+amazon2cis_rule_1_7_6: true
+amazon2cis_rule_1_8: true
+
+# Section 2 rules
+# Section 2 is Services (inetd Services, Special Purpose Services, and Service Clients)
+amazon2cis_rule_2_1_1: true
+amazon2cis_rule_2_1_2: true
+amazon2cis_rule_2_1_3: true
+amazon2cis_rule_2_1_4: true
+amazon2cis_rule_2_1_5: true
+amazon2cis_rule_2_1_6: true
+amazon2cis_rule_2_1_7: true
+amazon2cis_rule_2_1_8: true
+amazon2cis_rule_2_1_9: true
+amazon2cis_rule_2_1_10: true
+amazon2cis_rule_2_1_11: true
+amazon2cis_rule_2_1_12: true
+amazon2cis_rule_2_1_13: true
+amazon2cis_rule_2_1_14: true
+amazon2cis_rule_2_1_15: true
+amazon2cis_rule_2_1_16: true
+amazon2cis_rule_2_1_17: true
+amazon2cis_rule_2_1_18: true
+amazon2cis_rule_2_1_19: true
+amazon2cis_rule_2_1_1_1: true
+amazon2cis_rule_2_1_1_2: true
+amazon2cis_rule_2_1_1_3: true
+amazon2cis_rule_2_2_1: true
+amazon2cis_rule_2_2_2: true
+amazon2cis_rule_2_2_3: true
+amazon2cis_rule_2_2_4: true
+amazon2cis_rule_2_2_5: true
+amazon2cis_rule_2_3: true
+
+# Section 3 rules
+# Section 3 is Network Configuration (Disable unused network protocols, Network parameters (host), Network parameters (Host and Router), Uncommon Network Protocols, Firewall Configuration, and Configure iptables)
+amazon2cis_rule_3_1_1: true
+amazon2cis_rule_3_1_2: true
+amazon2cis_rule_3_2_1: true
+amazon2cis_rule_3_2_2: true
+amazon2cis_rule_3_3_1: true 
+amazon2cis_rule_3_3_2: true
+amazon2cis_rule_3_3_3: true
+amazon2cis_rule_3_3_4: true
+amazon2cis_rule_3_3_5: true
+amazon2cis_rule_3_3_6: true
+amazon2cis_rule_3_3_7: true
+amazon2cis_rule_3_3_8: true
+amazon2cis_rule_3_3_9: true
+amazon2cis_rule_3_4_1: true
+amazon2cis_rule_3_4_2: true
+amazon2cis_rule_3_5_1_1: false ### Coalfire Edits: AWS Uses Security Groups instead of firewall ###
+amazon2cis_rule_3_5_1_2: false
+amazon2cis_rule_3_5_1_3: false
+amazon2cis_rule_3_5_1_4: false
+amazon2cis_rule_3_5_1_5: false
+amazon2cis_rule_3_5_1_6: false
+amazon2cis_rule_3_5_1_7: false
+amazon2cis_rule_3_5_2_1: true
+amazon2cis_rule_3_5_2_2: true
+amazon2cis_rule_3_5_2_3: true
+amazon2cis_rule_3_5_2_4: true
+amazon2cis_rule_3_5_2_5: true
+amazon2cis_rule_3_5_2_6: true
+amazon2cis_rule_3_5_2_7: true
+amazon2cis_rule_3_5_2_8: true
+amazon2cis_rule_3_5_2_9: true
+amazon2cis_rule_3_5_2_10: true
+amazon2cis_rule_3_5_2_11: true
+amazon2cis_rule_3_5_3_1_1: true
+amazon2cis_rule_3_5_3_1_2: true
+amazon2cis_rule_3_5_3_1_3: true
+
+# Section 4 rules
+# Section 4 is Logging and Auditing (Configure System Accounting (auditd) and Configure Logging)
+amazon2cis_rule_4_1_1_1: true
+amazon2cis_rule_4_1_1_2: true
+amazon2cis_rule_4_1_1_3: true
+amazon2cis_rule_4_1_2_1: true
+amazon2cis_rule_4_1_2_2: true
+amazon2cis_rule_4_1_2_3: true
+amazon2cis_rule_4_1_2_4: true
+amazon2cis_rule_4_1_3: true
+amazon2cis_rule_4_1_4: true
+amazon2cis_rule_4_1_5: true
+amazon2cis_rule_4_1_6: true
+amazon2cis_rule_4_1_7: true
+amazon2cis_rule_4_1_8: true
+amazon2cis_rule_4_1_9: true
+amazon2cis_rule_4_1_10: true
+amazon2cis_rule_4_1_11: true
+amazon2cis_rule_4_1_12: true
+amazon2cis_rule_4_1_13: true
+amazon2cis_rule_4_1_14: true
+amazon2cis_rule_4_1_15: true
+amazon2cis_rule_4_1_16: true
+amazon2cis_rule_4_1_17: true
+amazon2cis_rule_4_2_1_1: false # Coalfire Edit: Using SIEM agents instead of rsyslog
+amazon2cis_rule_4_2_1_2: false
+amazon2cis_rule_4_2_1_3: false
+amazon2cis_rule_4_2_1_4: false
+amazon2cis_rule_4_2_1_5: false
+amazon2cis_rule_4_2_1_6: false
+amazon2cis_rule_4_2_2_1: false
+amazon2cis_rule_4_2_2_2: true
+amazon2cis_rule_4_2_2_3: true
+amazon2cis_rule_4_2_3: true
+amazon2cis_rule_4_2_4: true
+
+# Section 5 rules
+# Section 5 is Access, Authentication, and Authorization (Configure time-based job schedulers, Configure SSH Server, Configure PAM, and User Accounts and Environment)
+amazon2cis_rule_5_1_1: true
+amazon2cis_rule_5_1_2: true
+amazon2cis_rule_5_1_3: true
+amazon2cis_rule_5_1_4: true
+amazon2cis_rule_5_1_5: true
+amazon2cis_rule_5_1_6: true
+amazon2cis_rule_5_1_7: true
+amazon2cis_rule_5_1_8: true
+amazon2cis_rule_5_1_9: true
+amazon2cis_rule_5_2_1: true
+amazon2cis_rule_5_2_2: true
+amazon2cis_rule_5_2_3: true
+amazon2cis_rule_5_3_1: true
+amazon2cis_rule_5_3_2: true
+amazon2cis_rule_5_3_3: true
+amazon2cis_rule_5_3_4: true
+amazon2cis_rule_5_3_5: true
+amazon2cis_rule_5_3_6: true
+amazon2cis_rule_5_3_7: true
+amazon2cis_rule_5_3_8: true
+amazon2cis_rule_5_3_9: true
+amazon2cis_rule_5_3_10: true
+amazon2cis_rule_5_3_12: true
+amazon2cis_rule_5_3_11: true
+amazon2cis_rule_5_3_13: true
+amazon2cis_rule_5_3_14: true
+amazon2cis_rule_5_3_15: true
+amazon2cis_rule_5_3_16: true
+amazon2cis_rule_5_3_17: true
+amazon2cis_rule_5_3_18: true
+amazon2cis_rule_5_3_19: true
+amazon2cis_rule_5_3_20: true
+amazon2cis_rule_5_3_21: true
+amazon2cis_rule_5_3_22: true
+amazon2cis_rule_5_4_1: true
+amazon2cis_rule_5_4_2: false # Coalfire Edit: Alternative Implementation, used authconfig instead
+amazon2cis_rule_5_4_3: false # Coalfire Edit: Alternative Implementation, used authconfig instead
+amazon2cis_rule_5_4_4: false # Coalfire Edit: No graceful method to implement this, disabling authconfig breaks SSSD/realm
+amazon2cis_rule_5_5_1_1: true
+amazon2cis_rule_5_5_1_2: true
+amazon2cis_rule_5_5_1_3: true
+amazon2cis_rule_5_5_1_4: true
+amazon2cis_rule_5_5_1_5: true
+amazon2cis_rule_5_5_2: true
+amazon2cis_rule_5_5_3: true
+amazon2cis_rule_5_5_4: true
+amazon2cis_rule_5_5_5: true
+amazon2cis_rule_5_6: true
+amazon2cis_rule_5_7: true
+
+# Section 6 rules
+# Section 6 is System Maintenance (System File Permissions and User and Group Settings)
+amazon2cis_rule_6_1_1: true
+amazon2cis_rule_6_1_2: true
+amazon2cis_rule_6_1_3: true
+amazon2cis_rule_6_1_4: true
+amazon2cis_rule_6_1_5: true
+amazon2cis_rule_6_1_6: true
+amazon2cis_rule_6_1_7: true
+amazon2cis_rule_6_1_8: true
+amazon2cis_rule_6_1_9: true
+amazon2cis_rule_6_1_10: true
+amazon2cis_rule_6_1_11: true
+amazon2cis_rule_6_1_12: true
+amazon2cis_rule_6_1_13: true
+amazon2cis_rule_6_1_14: true
+amazon2cis_rule_6_2_1: true
+amazon2cis_rule_6_2_2: true
+amazon2cis_rule_6_2_3: true
+amazon2cis_rule_6_2_4: true
+amazon2cis_rule_6_2_5: true
+amazon2cis_rule_6_2_6: true
+amazon2cis_rule_6_2_7: true
+amazon2cis_rule_6_2_8: true
+amazon2cis_rule_6_2_9: true
+amazon2cis_rule_6_2_10: true
+amazon2cis_rule_6_2_11: true
+amazon2cis_rule_6_2_12: true
+amazon2cis_rule_6_2_13: true
+amazon2cis_rule_6_2_14: true
+amazon2cis_rule_6_2_15: true
+amazon2cis_rule_6_2_16: true
+amazon2cis_rule_6_2_17: true
+
+# Service configuration booleans set true to keep service
+amazon2cis_allow_autofs: false
+amazon2cis_avahi_server: false
+amazon2cis_cups_server: false
+amazon2cis_dhcp_server: false
+amazon2cis_ldap_server: false
+amazon2cis_named_server: false
+amazon2cis_vsftpd_server: false
+amazon2cis_httpd_server: false
+amazon2cis_dovecot_server: false
+amazon2cis_smb_server: false
+amazon2cis_squid_server: false
+amazon2cis_snmp_server: false
+amazon2cis_nis_server: false
+amazon2cis_telnet_server: false
+amazon2cis_is_mail_server: false
+amazon2cis_nfs_rpc_server: false
+amazon2cis_nfs_server: false
+amazon2cis_rpc_server: false
+amazon2cis_rsyncd_server: false
+
+# Service Clients
+amazon2cis_ypbind_required: false
+amazon2cis_rsh_required: false
+amazon2cis_talk_required: false
+amazon2cis_telnet_required: false
+amazon2cis_openldap_clients_required: false
+
+# System network parameters (host only OR host and router)
+amazon2cis_is_router: false
+
+# IPv6 required
+amazon2cis_ipv6_required: false
+
+# Whether or not to run tasks related to auditing/patching the desktop environment
+amazon2cis_gui: false
+
+# Set to 'true' if X Windows is needed in your environment
+amazon2cis_xwindows_required: false
+
+# Time Synchronization - Either chrony or ntp
+amazon2cis_time_synchronization: chrony
+
+amazon2cis_time_synchronization_servers: # Coalfire Edit: Use NIST time servers
+    - time.nist.gov
+    - time-a-g.nist.gov
+
+amazon2cis_chrony_server_options: "minpoll 8"
+amazon2cis_ntp_server_options: "iburst"
+
+# Firewall Service - either firewalld or iptables
+amazon2cis_firewall: firewalld
+amazon2cis_default_zone: public
+
+# AIDE
+amazon2cis_config_aide: true
+# AIDE cron settings
+amazon2cis_aide_cron:
+    cron_user: root
+    cron_file: /etc/crontab
+    aide_job: '/usr/sbin/aide --check'
+    aide_minute: '0'
+    aide_hour: '5'
+    aide_day: '*'
+    aide_month: '*'
+    aide_weekday: '*'
+
+## Section 4 variables
+# auditd settings
+amazon2cis_auditd:
+    space_left_action: email
+    action_mail_acct: root
+    admin_space_left_action: halt
+    max_log_file_action: keep_logs
+
+# 4.2.3
+# amazon2cis_logrotate sets the daily, weekly, monthly, yearly value for the log rotation
+# To conform to CIS standards this just needs to comply with your site policy
+amazon2cis_logrotate: "daily"
+
+# AMZN LNX 2-4.1.2.4
+# amazon2cis_audit_backlog_limit value needs to be 8192 or larger to conform to CIS standards
+amazon2cis_audit_backlog_limit: 8192
+
+# AMZN LNX-4.2.1.4/4.2.1.5 remote and destation log server name
+amazon2cis_remote_log_server: logagg.example.com
+
+# AMZN LNX-4.2.1.6
+amazon2cis_system_is_log_server: false
+
+# Maxium audit log size in MB
+amazon2cis_maxauditlog_size: 10
+
+
+amazon2cis_rsyslog_ansibleManaged: true
+
+# SSH variables
+amazon2cis_ssh_loglevel: INFO
+# amazon2cis_ssh_maxsessions is the max number of sessions
+# To conform to CIS standards this value nees to be 10 or less
+amazon2cis_ssh_maxsessions: 10
+amazon2cis_sshd:
+    # clientalivecountmax: 0
+    # clientaliveinterval shoudl be between 1 and 900
+    clientaliveinterval: 300
+    ciphers: "aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr" # Coalfire Edit: Removed "chacha20-poly1305@openssh.com" due to FIPS
+    macs: "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256"
+    kex: "ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256" # Coalfire Edit: Removed "curve25519-sha256,curve25519-sha256@libssh.org" due to FIPS
+    # logingracetime value is in seconds and needs to be set to 1 minute or less
+    logingracetime: 60
+    # WARNING: make sure you understand the precedence when working with these values!!
+    # allowusers:
+    # allowgroups: systems dba
+    # denyusers:
+    # denygroups:
+
+# pam variables
+amazon2cis_pam_faillock:
+    attempts: 5
+    interval: 900
+    unlock_time: 900
+    fail_for_root: "no"
+    remember: 5
+    pwhash: sha512
+amazon2cis_inactivelock:
+    lock_days: 30
+
+# Accounts listed below will not have INACTIVE field set in shadow file
+amazon2cis_inactive_whitelist:
+    - root
+    - vagrant
+
+amazon2cis_pass:
+    max_days: 90
+    min_days: 1
+    warn_age: 7
+
+# 5.3.7
+# amazon2_max_auth_tries is the number of max authorization attemps permitted per connection
+# To conform to CIS standards this needs to be 4 or less
+amazon2_max_auth_tries: 4
+
+# 5.4.5
+# Session timeout setting file (TMOUT setting can be set in multiple files)
+# Timeout value is in seconds. (60 seconds * 10 = 600)
+amazon2cis_shell_session_timeout:
+    file: /etc/profile.d/tmout.sh
+    timeout: 600
+# 5.4.1.5 Allow ansible to expire password for account with a last changed date in the future. False will just display users in violation, true will expire those users passwords
+amazon2cis_futurepwchgdate_autofix: true
+
+# 5.4.2
+amazon2cis_int_gid: 1000
+
+# 5.6 Group to be used for su
+# this group needs to exists groups will not be created for remediation this is considered sys admins
+
+# amazon2cis_sugroup: sugroup
+
+# amazon2_6.1.1
+amazon2cis_rpm_audit_file: /var/tmp/rpm_file_check
+
+# amazon2_6.2.12
+amazon2cis_no_world_write_adjust: true
+amazon2cis_passwd_label: "{{ (this_item | default(item)).id }}: {{ (this_item | default(item)).dir }}"
+amazon2cis_dotperm_ansibleManaged: true
+
+# SELinux policy
+amazon2cis_selinux_pol: targeted
+
+# Warning Banner Content (issue, issue.net, motd)
+amazon2cis_warning_banner: | # Coalfire Edit: Custom Banner
+    ################################# WARNING!!! #####################################
+    #                                                                                #
+    # You are accessing a U.S. Government information system. Unauthorized or        #
+    # improper use of this system may result in disciplinary action, as well as      #
+    # civil and criminal penalties. By using this information system, you understand #
+    # and consent to the following:, (1) You have no reasonable expectation of       #
+    # privacy regarding any communication or information transiting or stored on     #
+    # this information system., (2) All attempts to access and use this system       #
+    # and/or its resources are subject to monitoring and recording., (3) You         #
+    # expressly consent to this monitoring or recording, and it is advised that if   #
+    # such reveals evidence any criminal activity or abuse of authority, the         #
+    # information will be reported to authorities for action.                        #
+    #                                                                                #
+    ##################################################################################
+# End Banner
+
+### Goss binary settings ###
+goss_version:
+    release: v0.3.16
+    checksum: 'sha256:827e354b48f93bce933f5efcd1f00dc82569c42a179cf2d384b040d8a80bfbfb'
+audit_bin_path: /usr/local/bin/
+audit_bin: "{{ audit_bin_path }}goss"
+audit_format: json
+
+# if get_goss_file == download change accordingly
+goss_url: "https://github.com/aelsabbahy/goss/releases/download/{{ goss_version.release }}/goss-linux-amd64"
+
+## if get_goss_file - copy the following needs to be updated for your environment
+## it is expected that it will be copied from somewhere accessible to the control node
+## e.g copy from ansible control node to remote host
+copy_goss_from_path: /some/accessible/path
+
+### Goss Audit Benchmark file ###
+## managed by the control audit_content
+# git
+audit_file_git: "https://github.com/ansible-lockdown/{{ benchmark }}-Audit.git"
+audit_git_version: devel
+
+# copy:
+audit_local_copy: "some path to copy from"
+
+# get_url:
+audit_files_url: "some url maybe s3?"
+
+# Where the goss audit configuration will be stored
+audit_files: "/var/tmp/{{ benchmark }}-Audit/"
+
+## Goss configuration information
+# Where the goss configs and outputs are stored
+audit_out_dir: '/var/tmp'
+audit_conf_dir: "{{ audit_out_dir }}/{{ benchmark }}-Audit"
+pre_audit_outfile: "{{ audit_out_dir }}/{{ ansible_hostname }}_pre_scan_{{ ansible_date_time.epoch }}.{{ audit_format }}"
+post_audit_outfile: "{{ audit_out_dir }}/{{ ansible_hostname }}_post_scan_{{ ansible_date_time.epoch }}.{{ audit_format }}"
+
+## The following should not need changing
+goss_file: "{{ audit_conf_dir }}goss.yml"
+audit_vars_path: "{{ audit_conf_dir }}/vars/{{ ansible_hostname }}.yml"
+audit_results: |
+      The pre remediation results are: {{ pre_audit_summary }}.
+      The post remediation results are: {{ post_audit_summary }}.
+      Full breakdown can be found in {{ audit_out_dir }}

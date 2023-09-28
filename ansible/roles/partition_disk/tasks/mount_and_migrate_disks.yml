@@ -1,0 +1,52 @@
+- name: Make temp dir
+  ansible.builtin.file:
+    path: "/mnt{{ item.value.path }}"
+    state: directory
+    recurse: true
+
+- name: Mount temp dir
+  ansible.posix.mount:
+    path: "/mnt{{ item.value.path }}"
+    src: "/dev/mapper/disk2vg-{{ item.value.fstab_entry }}"
+    fstype: xfs
+    state: mounted
+
+- name: Debug loop item path
+  ansible.builtin.debug:
+    msg: "{{ item.value.path }}"
+
+# Attempting to use native Ansible copy caused issues since it inherently relies on the /home/ec2-user directory existing
+# Also copy module changes all file owners to root (which causes issues with SSH, not sure about other impacts), this is cleaner
+# Must use shell module instead of command
+- name: Shell copy files
+  ansible.builtin.shell: "cp -Raxnv {{ item.value.path }}/* /mnt{{ item.value.path }}"
+  args:
+    chdir: /opt/packer/files
+  register: copy
+  changed_when: copy.stdout is defined
+
+- name: Move files
+  ansible.builtin.command: "mv {{ item.value.path }} {{ item.value.path }}-old"
+  args:
+    chdir: /opt/packer/files
+  register: move
+  changed_when: true
+
+- name: Unmount temp dir
+  ansible.posix.mount:
+    path: "/mnt{{ item.value.path }}"
+    state: absent
+
+- name: Create folder
+  ansible.builtin.file:
+    path: "{{ item.value.path }}"
+    state: directory
+    mode: "0755"
+
+- name: Mount logical volume
+  ansible.posix.mount:
+    path: "{{ item.value.path }}"
+    src: "/dev/mapper/disk2vg-{{ item.value.fstab_entry }}"
+    opts: "{{ item.value.opts }}"
+    fstype: xfs
+    state: mounted

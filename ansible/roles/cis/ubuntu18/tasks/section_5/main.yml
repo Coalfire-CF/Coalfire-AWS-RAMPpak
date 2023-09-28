@@ -1,0 +1,24 @@
+---
+- name: "SECTION | 5.1 | Configure time-based job schedulers"
+  import_tasks: cis_5.1.x.yml
+
+- name: "SECTION | 5.2 | Configure sudo"
+  import_tasks: cis_5.2.x.yml
+
+- name: "SECTION | 5.3 | Configure SSH Server"
+  import_tasks: cis_5.3.x.yml
+
+- name: "SECTION | 5.4.x | User PAM"
+  import_tasks: cis_5.4.x.yml
+
+- name: "SECTION | 5.5.1.x | User Accounts and Enironment part 1"
+  import_tasks: cis_5.5.1.x.yml
+
+- name: "SECTION | 5.5.x | User Accounts and Enironment part 2"
+  import_tasks: cis_5.5.x.yml
+
+- name: "SECTION | 5.6 | Ensure root login is restricted to system console"
+  import_tasks: cis_5.6.yml
+
+- name: "SECTION | 5.7 | Ensure access to the su command is restricted"
+  import_tasks: cis_5.7.yml

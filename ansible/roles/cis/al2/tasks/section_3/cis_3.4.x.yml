@@ -1,0 +1,37 @@
+---
+
+- name: "3.4.1 | PATCH | Ensure DCCP is disabled"
+  lineinfile:
+      dest: /etc/modprobe.d/CIS.conf
+      regexp: "^(#)?install dccp(\\s|$)"
+      line: "install dccp /bin/true"
+      create: true
+      owner: root
+      group: root
+      mode: 0600
+  when:
+      - amazon2cis_rule_3_4_1
+  tags:
+      - level2
+      - automated
+      - patch
+      - rule_3.4.1
+      - dccp
+
+- name: "3.4.2 | PATCH | Ensure SCTP is disabled"
+  lineinfile:
+      dest: /etc/modprobe.d/CIS.conf
+      regexp: "^(#)?install sctp(\\s|$)"
+      line: "install sctp /bin/true"
+      create: true
+      owner: root
+      group: root
+      mode: 0600
+  when:
+      - amazon2cis_rule_3_4_2
+  tags:
+      - level2
+      - automated
+      - patch
+      - rule_3.4.2
+      - sctp

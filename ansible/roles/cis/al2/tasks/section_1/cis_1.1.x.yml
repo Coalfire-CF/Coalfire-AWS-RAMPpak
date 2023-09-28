@@ -1,0 +1,303 @@
+---
+
+- name: "1.1.2 | PATCH | Ensure /tmp is configured"
+  systemd:
+      name: tmp.mount
+      daemon_reload: true
+      enabled: true
+      masked: false
+      state: started
+  when:
+      - amazon2cis_tmp_svc
+      - amazon2cis_rule_1_1_2
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.1.2
+      - mounts
+
+- name: |
+         "1.1.3 | PATCH | Ensure noexec option set on /tmp partition
+          1.1.4 | PATCH | Ensure nodev option set on /tmp partition
+          1.1.5 | PATCH | Ensure nosuid option set on /tmp partition"
+  mount:
+      name: /tmp
+      src: "{{ item.device }}"
+      fstype: "{{ item.fstype }}"
+      state: present
+      opts: defaults,{% if amazon2cis_rule_1_1_4 %}nodev,{% endif %}{% if amazon2cis_rule_1_1_3 %}noexec,{% endif %}{% if amazon2cis_rule_1_1_5 %}nosuid{% endif %}
+  notify: systemd restart tmp.mount
+  with_items:
+      - "{{ ansible_mounts }}"
+  loop_control:
+      label: "{{ item.device }}"
+  when:
+      - item.mount == "/tmp"
+      - amazon2cis_tmp_svc
+      - amazon2cis_rule_1_1_3 or
+        amazon2cis_rule_1_1_4 or
+        amazon2cis_rule_1_1_5
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.1.3
+      - rule_1.1.4
+      - rule_1.1.5
+      - mounts
+
+- name: |
+    "1.1.6 | PATCH | Ensure /dev/shm is configured
+     1.1.7 | PATCH | Ensure noexec option set on /dev/shm partition
+     1.1.8 | PATCH | Ensure nodev option set on /dev/shm partition
+     1.1.9 | PATCH | Ensure nosuid option set on /dev/shm partition"
+  mount:
+      name: /dev/shm
+      src: tmpfs
+      fstype: tmpfs
+      state: present
+      opts: defaults,{% if amazon2cis_rule_1_1_7 %}noexec,{% endif %}{% if amazon2cis_rule_1_1_8 %}nodev,{% endif %}{% if amazon2cis_rule_1_1_9 %}nosuid{% endif %},seclabel
+  notify: remount dev_shm
+  when:
+      - amazon2cis_rule_1_1_6 or
+        amazon2cis_rule_1_1_7 or
+        amazon2cis_rule_1_1_8 or
+        amazon2cis_rule_1_1_9
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.1.6
+      - rule_1.1.7
+      - rule_1.1.8
+      - rule_1.1.9
+
+- name: "1.1.10 | AUDIT | Ensure separate partition exists for /var"
+  block:
+      - name: "1.1.10 | AUDIT | Ensure separate partition exists for /var | Message if absent"
+        debug:
+            msg: "Warning! /var does not exist on a seperate partition. You need will need to create a sepearte partition for /var manually"
+        when: "'/var' not in mount_names"
+
+      - name: "1.1.10 | AUDIT | Ensure separate partition exists for /var | Message if present"
+        debug:
+            msg: "Congradulations: /var is on a seperate partition"
+        when: "'/var' in mount_names"
+  when:
+      - amazon2cis_rule_1_1_10
+  tags:
+      - level2
+      - automated
+      - audit
+      - rule_1.1.10
+      - mounts
+
+- name: "1.1.11 | AUDIT | Ensure separate partition exists for /var/tmp"
+  block:
+      - name: "1.1.11 | AUDIT | Ensure separate partition exists for /var/tmp | Message if absent"
+        debug:
+            msg: "Warning! /var/tmp does not exist on a seperate partition. You will need to create a seperate partition for /var/tmp manually"
+        when: "'/var/tmp' not in mount_names"
+
+      - name: "1.1.11 | AUDIT | Ensure separate partition exists for /var/tmp | Message if present"
+        debug:
+            msg: "Congradulations: /var/tmp is on a seperate partition"
+        when: "'/var/tmp' in mount_names"
+  when:
+      - amazon2cis_rule_1_1_11
+  tags:
+      - level2
+      - automated
+      - audit
+      - rule_1.1.11
+      - mounts
+
+- name: |
+    "1.1.12 | PATCH | Ensure noexec option set on /var/tmp partition
+     1.1.13 | PATCH | Ensure nodev option set on /var/tmp partition
+     1.1.14 | PATCH | Ensure nosuid option set on /var/tmp partition"
+  mount:
+      name: /var/tmp
+      src: "{{ item.device }}"
+      fstype: "{{ item.fstype }}"
+      state: present
+      opts: defaults,{% if amazon2cis_rule_1_1_12 %}noexec,{% endif %}{% if amazon2cis_rule_1_1_13 %}nodev,{% endif %}{% if amazon2cis_rule_1_1_14 %}nosuid{% endif %}
+  notify: remount var_tmp
+  with_items:
+      - "{{ ansible_mounts }}"
+  loop_control:
+      label: "{{ item.device }}"
+  when:
+      - item.mount == "/var/tmp"
+      - amazon2cis_rule_1_1_11 or
+        amazon2cis_rule_1_1_12 or
+        amazon2cis_rule_1_1_13 or
+        amazon2cis_rule_1_1_14
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.1.11
+      - rule_1.1.12
+      - rule_1.1.13
+      - rule_1.1.14
+      - mounts
+
+- name: "1.1.15 | PATCH | Ensure separate partition exists for /var/log"
+  block:
+      - name: "1.1.15 | PATCH | Ensure separate partition exists for /var/log | Message if absent"
+        debug:
+            msg: "Warning! /var/log is not on a sperate partition. You will need to create a seperate partition for /var/log manually"
+        when: "'/var/log' not in mount_names"
+
+      - name: "1.1.15 | PATCH | Ensure separate partition exists for /var/log | Message if present"
+        debug:
+            msg: "Congradulations: /var/log is on a seperate partition"
+        when: "'/var/log' in mount_names"
+  when:
+      - amazon2cis_rule_1_1_15
+  tags:
+      - level2
+      - automated
+      - audit
+      - rule_1.1.15
+      - mounts
+
+- name: "1.1.16 | AUDIT | Ensure separate partition exists for /var/log/audit"
+  block:
+      - name: "1.1.16 | AUDIT | Ensure separate partition exists for /var/log/audit | Message if absent"
+        debug:
+            msg: "Warning! /var/log/audit is not on a sperate partition. You will need to create a seperate partition for /var/log manually"
+        when: "'/var/log/audit' not in mount_names"
+
+      - name: "1.1.16 | AUDIT | Ensure separate partition exists for /var/log/audit | Message if present"
+        debug:
+            msg: "Congradulations: /var/log/audit is on a seperate partition"
+        when: "'/var/log/audit' in mount_names"
+  when:
+      - amazon2cis_rule_1_1_16
+  tags:
+      - level2
+      - automated
+      - audit
+      - rule_1.1.16
+      - mounts
+
+- name: "1.1.17 | AUDIT | Ensure separate partition exists for /home"
+  block:
+      - name: "1.1.17 | AUDIT | Ensure separate partition exists for /home | Message if absent"
+        debug:
+            msg: "Warning! /home is not on a sperate partition. You will need to create a seperate partition for /var/log manually"
+        when: "'/home' not in mount_names"
+
+      - name: "1.1.17 | AUDIT | Ensure separate partition exists for /home | Message if present"
+        debug:
+            msg: "Congradulations: /home is on a seperate partition"
+        when: "'/home' in mount_names"
+  when:
+      - amazon2cis_rule_1_1_17
+  tags:
+      - level2
+      - automated
+      - audit
+      - rule_1.1.17
+      - mounts
+
+- name: "1.1.18 | PATCH | Ensure nodev option set on /home partition"
+  mount:
+      name: /home
+      src: "{{ item.device }}"
+      fstype: "{{ item.fstype }}"
+      state: present
+      opts: defaults,{% if amazon2cis_rule_1_1_18 %}nodev{% endif %}
+  notify: remount home
+  with_items:
+      - "{{ ansible_mounts }}"
+  loop_control:
+      label: "{{ item.device }}"
+  when:
+      - item.mount == "/home"
+      - amazon2cis_rule_1_1_18
+  tags:
+      - level2
+      - automated
+      - patch
+      - rule_1.1.17
+      - rule_1.1.18
+
+- name: |
+    "1.1.19 | AUDIT | Ensure noexec option set on removable media partitions
+     1.1.20 | AUDIT | Ensure nodev option set on removable media partitions
+     1.1.21 | AUDIT | Ensure nosuid option set on removable media partitions"
+  debug:
+      msg: "--> Not Applicable"
+  changed_when: false
+  when:
+      - amazon2cis_rule_1_1_19 or
+        amazon2cis_rule_1_1_20 or
+        amazon2cis_rule_1_1_21
+  tags:
+      - level1
+      - automated
+      - audit
+      - rule_1.1.19
+      - rule_1.1.20
+      - rule_1.1.21
+      - removable_devices
+
+- name: "1.1.22 | PATCH | Ensure sticky bit is set on all world-writable directories"
+  shell: df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type d -perm -0002 2>/dev/null | xargs chmod a+t
+  changed_when: false
+  failed_when: false
+  args:
+      warn: false
+  when:
+      - amazon2cis_rule_1_1_22
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.1.22
+      - skip_ansible_lint
+      - stickybits
+      - permissions
+
+- name: "1.1.23 | PATCH | Disable Automounting"
+  service:
+      name: autofs
+      enabled: false
+  when:
+      - not amazon2cis_allow_autofs
+      - "'autofs' in ansible_facts.packages"
+      - amazon2cis_rule_1_1_23
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.1.23
+      - mounts
+      - automounting
+
+- name: "1.1.24 | PATCH | Disable USB Storage"
+  block:
+      - name: "1.1.24 | PATCH | Disable USB Storage | Edit modprobe config"
+        lineinfile:
+            dest: /etc/modprobe.d/usb-storage.conf
+            regexp: "^(#)?install usb-storage(\\s|$)"
+            line: "install usb-storage /bin/true"
+            mode: 0600
+            create: true
+
+      - name: "1.1.24 | PATCH | Remove USB Storage module | Remove usb-storage module"
+        modprobe:
+            name: usb-storage
+            state: absent
+  when:
+      - amazon2cis_rule_1_1_24
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.1.24
+      - usb-storage

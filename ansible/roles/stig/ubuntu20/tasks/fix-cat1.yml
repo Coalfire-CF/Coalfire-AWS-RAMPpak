@@ -1,0 +1,364 @@
+---
+
+- name: "HIGH | UBTU-20-010006 | PATCH | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication."
+  block:
+      - name: "HIGH | UBTU-20-010006 | PATCH | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Install libpam-pkcs11"
+        package:
+            name: libpam-pkcs11
+            state: present
+        when: "'libpam-pkcs11' not in ansible_facts.packages"
+
+      - name: "HIGH | UBTU-20-010006 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Check for pam_pkcs11.conf"
+        stat:
+            path: /etc/pam_pkcs11/pam_pkcs11.conf
+        register: ubtu_20_010006_pam_pkcs11_conf_stat
+
+      - name: "HIGH | UBTU-20-010006 | PATCH | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Template pam_pkcs11.conf if does not exist"
+        template:
+            src: pam_pkcs11.conf.j2
+            dest: /etc/pam_pkcs11/pam_pkcs11.conf
+        when:
+            - not ubtu_20_010006_pam_pkcs11_conf_stat.stat.exists
+
+      - name: "HIGH | UBTU-20-010006 | PATCH | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Set use_mappers if pam_pkcs11.conf exists"
+        replace:
+            path: /etc/pam_pkcs11/pam_pkcs11.conf
+            regexp: 'use_mappers =.*'
+            replace: 'use_mappers = pwent;'
+        when:
+            - ubtu_20_010006_pam_pkcs11_conf_stat.stat.exists
+  when:
+      - ubtu_20_010006
+  tags:
+      - UBTU-20-010006
+      - CAT1
+      - CCI-000187
+      - SRG-OS-000068-GPOS-00036
+      - SV-238201r832933_rule
+      - V-238201
+      - pam
+      - authentication
+
+- name: "HIGH | UBTU-20-010009 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication."
+  block:
+      - name: "HIGH | UBTU-20-010009 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Superuser Check In Grub."
+        shell: grep "^set superusers" /boot/grub/grub.cfg
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010009_bootloader_grub_check
+
+      - name: "HIGH | UBTU-20-010009 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Hash Password Check In Grub."
+        shell: grep "^password" /boot/grub/grub.cfg
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010009_bootloader_hash_check
+
+      - name: "HIGH | UBTU-20-010009 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Set Fact SU Name."
+        set_fact:
+            ubtu_20_010009_bootloader_grub_name: "{{ ubtu_20_010009_bootloader_grub_check.stdout | regex_replace('\"','') | regex_replace('set superusers=','') }}"
+
+      - name: "HIGH | UBTU-20-010009 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | No Username And Password Meet Set For Bootloader."
+        debug:
+            msg:
+                - "Warning!! You do not currently have the bootloader password configured properly."
+                - "Please review your grub.cfg and check for errors."
+        when: "'superuser' not in ubtu_20_010009_bootloader_grub_check.stdout or 'password' not in ubtu_20_010009_bootloader_hash_check.stdout"
+
+      - name: "HIGH | UBTU-20-010009 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Verify Username And Password Meet Site Policies For Bootloader."
+        debug:
+            msg:
+                - "Warning!! Below is your current bootloader configuration."
+                - "Please review to make sure they conform to your site policies."
+                - "Username: {{ ubtu_20_010009_bootloader_grub_name }}"
+                - "Password Hash: {{ ubtu_20_010009_bootloader_hash_check.stdout }}"
+        when:
+            - "'superuser' in ubtu_20_010009_bootloader_grub_check.stdout"
+            - "'password' in ubtu_20_010009_bootloader_hash_check.stdout"
+
+      - name: "HIGH | UBTU-20-010009 | AUDIT | The Ubuntu operating system must map the authenticated identity to the user or group account for PKI-based authentication. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010009'
+  when:
+      - ubtu_20_010009
+  tags:
+      - UBTU-20-010009
+      - CAT1
+      - CCI-000213
+      - SRG-OS-000080-GPOS-00048
+      - SV-238204r832936_rule
+      - V-238204
+      - grub
+
+- name: "HIGH | UBTU-20-010012 | PATCH | The Ubuntu operating system must ensure only users who need access to security functions are part of sudo group."
+  block:
+      - name: "HIGH | UBTU-20-010012 | AUDIT | The Ubuntu operating system must ensure only users who need access to security functions are part of sudo group. | Verify Users In Sudo Group."
+        shell: 'grep {{ ubtu20stig_sudo_group_name }} /etc/group | cut -f4 -d:'
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010012_sudoers_group
+
+      - name: "HIGH | UBTU-20-010012 | AUDIT | The Ubuntu operating system must ensure only users who need access to security functions are part of sudo group. | Set Fact Sudoers List."
+        set_fact:
+            sudoers_group_list: "{{ ubtu_20_010012_sudoers_group.stdout.split(',') }}"
+
+      - name: "HIGH | UBTU-20-010012 | AUDIT | The Ubuntu operating system must ensure only users who need access to security functions are part of sudo group. | Compare List Of Unauthorized Users."
+        set_fact:
+            unauthorized_sudoers: "{{ sudoers_group_list | difference(ubtu20_allowed_sudoers) }}"
+        when: ubtu20_auto_remove_sudoers
+
+      - name: "HIGH | UBTU-20-010012 | PATCH | The Ubuntu operating system must ensure only users who need access to security functions are part of sudo group. | Remove Unauthorized Users."
+        command: "gpasswd -d {{ item }} sudo"
+        with_items:
+            - "{{ unauthorized_sudoers }}"
+        when:
+            - ubtu20_auto_remove_sudoers
+            - unauthorized_sudoers != [""]
+
+      - name: "HIGH | UBTU-20-010012 | AUDIT | The Ubuntu operating system must ensure only users who need access to security functions are part of sudo group. | Show List Of Current Sudo Users In Group."
+        debug:
+            msg:
+                - "Warning!! The users below are in the sudoers group. Please make sure all users conform to site policies for allowed group access."
+                - "{{ sudoers_group_list }}"
+        when: not ubtu20_auto_remove_sudoers
+
+      - name: "HIGH | UBTU-20-010012 | AUDIT | The Ubuntu operating system must ensure only users who need access to security functions are part of sudo group. | Set Warn Count."
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010012'
+        when: not ubtu20_auto_remove_sudoers
+  when:
+      - ubtu_20_010012
+  tags:
+      - UBTU-20-010012
+      - CAT1
+      - CCI-001084
+      - SRG-OS-000134-GPOS-00068
+      - SV-238206r653793_rule
+      - V-238206
+      - sudo
+
+- name: "HIGH | UBTU-20-010042 | PATCH | The Ubuntu operating system must use SSH to protect the confidentiality and integrity of transmitted information."
+  block:
+      - name: "HIGH | UBTU-20-010042 | PATCH | The Ubuntu operating system must use SSH to protect the confidentiality and integrity of transmitted information. | Install Packages"
+        package:
+            name: ssh
+            state: present
+        when: "'ssh' not in ansible_facts.packages"
+
+      - name: "HIGH | UBTU-20-010042 | PATCH | The Ubuntu operating system must use SSH to protect the confidentiality and integrity of transmitted information. | Enable SSH"
+        service:
+            name: sshd
+            state: started
+            enabled: true
+  when:
+      - ubtu_20_010042
+  tags:
+      - UBTU-20-010042
+      - CAT1
+      - CCI-002418
+      - CCI-002420
+      - CCI-002422
+      - SRG-OS-000423-GPOS-00187
+      - SV-238215r853406_rule
+      - V-238215
+      - sshd
+
+- name: "HIGH | UBTU-20-010047 | PATCH | The Ubuntu operating system must not allow unattended or automatic login via SSH."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+  notify: restart sshd
+  with_items:
+      - { regexp: '^#?\s*PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
+      - { regexp: '^#?\s*PermitUserEnvironment', line: 'PermitUserEnvironment no'}
+  when:
+      - ubtu_20_010047
+  tags:
+      - UBTU-20-010047
+      - CAT1
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00229
+      - SV-238218r877377_rule
+      - V-238218
+      - sshd
+
+- name: "HIGH | UBTU-20-010048 | PATCH | The Ubuntu operating system must be configured so that remote X connections are disabled, unless to fulfill documented and validated mission requirements."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#?\s*X11Forwarding'
+      line: "X11Forwarding no"
+  notify: restart sshd
+  when:
+      - ubtu_20_010048
+  tags:
+      - UBTU-20-010048
+      - CAT2
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00227
+      - SV-238219r858533_rule
+      - V-238219
+      - sshd
+
+- name: "HIGH | UBTU-20-010405 | PATCH | The Ubuntu operating system must not have the telnet package installed."
+  package:
+      name: telnet
+      state: absent
+  when:
+      - ubtu_20_010405
+      - not ubtu20stig_telnet_required
+  tags:
+      - UBTU-20-010405
+      - CAT1
+      - CCI-000197
+      - SRG-OS-000074-GPOS-00042
+      - SV-238326r877396_rule
+      - V-238326
+      - telnet
+
+- name: "HIGH | UBTU-20-010406 | PATCH | The Ubuntu operating system must not have the rsh-server package installed."
+  package:
+      name: rsh-server
+      state: absent
+  when:
+      - ubtu_20_010406
+      - not ubtu20stig_rshserver_required
+  tags:
+      - UBTU-20-010406
+      - CAT1
+      - CCI-000381
+      - SRG-OS-000095-GPOS-00049
+      - SV-238327r654156_rule
+      - V-238327
+      - rsh-server
+
+- name: "HIGH | UBTU-20-010442 | AUDIT | The Ubuntu operating system must implement NIST FIPS-validated cryptography to protect classified information and for the following: To provision digital signatures, to generate cryptographic hashes, and to protect unclassified information requiring confidentiality and cryptographic protection in accordance with applicable federal laws, Executive Orders, directives, policies, regulations, and standards."
+  block:
+      - name: "HIGH | UBTU-20-010442 | AUDIT | The Ubuntu operating system must implement NIST FIPS-validated cryptography to protect classified information and for the following: To provision digital signatures, to generate cryptographic hashes, and to protect unclassified information requiring confidentiality and cryptographic protection in accordance with applicable federal laws, Executive Orders, directives, policies, regulations, and standards. | Alert no fips-mode"
+        debug:
+            msg:
+                - "Warning!! You do not have FIPS-Mode enabled. This is a finding, please enable to conform to STIG standards"
+                - "A subscription to the Ubuntu Pro plan is required to obtain the FIPS Kernel cryptographic modules and enable FIPS"
+
+      - name: "HIGH | UBTU-20-010442 | AUDIT | The Ubuntu operating system must implement NIST FIPS-validated cryptography to protect classified information and for the following: To provision digital signatures, to generate cryptographic hashes, and to protect unclassified information requiring confidentiality and cryptographic protection in accordance with applicable federal laws, Executive Orders, directives, policies, regulations, and standards. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010442'
+  when:
+      - ubtu_20_010442
+      - not ansible_fips
+  tags:
+      - UBTU-20-010442
+      - CAT1
+      - CCI-002450
+      - SRG-OS-000396-GPOS-00176
+      - SV-238363r880881_rule
+      - V-238363
+      - fips
+
+- name: "HIGH | UBTU-20-010459 | PATCH | The Ubuntu operating system must disable the x86 Ctrl-Alt-Delete key sequence if a graphical user interface is installed."
+  lineinfile:
+      path: /etc/dconf/db/local.d/00-disable-CAD
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      insertafter: EOF
+      create: true
+  notify: dconf update
+  with_items:
+      - { regexp: '^\[org/gnome/settings-daemon/plugins/media-keys\]', line: "[org/gnome/settings-daemon/plugins/media-keys]" }
+      - { regexp: 'logout=', line: "logout=''" }
+  when:
+      - ubtu_20_010459
+      - ubtu20stig_desktop_required
+  tags:
+      - UBTU-20-010459
+      - CAT1
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00227
+      - SV-238379r654312_rule
+      - V-238379
+      - dconf
+
+- name: "HIGH | UBTU-20-010460 | PATCH | The Ubuntu operating system must disable the x86 Ctrl-Alt-Delete key sequence."
+  systemd:
+      name: ctrl-alt-del.target
+      state: stopped
+      enabled: false
+      masked: true
+      daemon_reload: true
+  when:
+      - ubtu_20_010460
+  tags:
+      - UBTU-20-010460
+      - CAT1
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00227
+      - SV-238380r832974_rule
+      - V-238380
+      - service
+
+- name: "HIGH | UBTU-20-010462 | PATCH | The Ubuntu operating system must not have accounts configured with blank or null passwords."
+  block:
+      - name: "HIGH | UBTU-20-010462 | PATCH | The Ubuntu operating system must not have accounts configured with blank or null passwords. | Get users with blank passwords"
+        shell: "awk -F: '!$2 {print $1}' /etc/shadow"
+        changed_when: false
+        failed_when: false
+        check_mode: false
+        register: ubtu_20_010462_blank_pw_users
+
+      - name: "HIGH | UBTU-20-010462 | PATCH | The Ubuntu operating system must not have accounts configured with blank or null passwords. | Warn on users with blank passwords"
+        debug:
+            msg:
+                - "Warning!! You have users that are not using passwords. Please either set a password, lock, or remove the accounts below:"
+                - "{{ ubtu_20_010462_blank_pw_users.stdout_lines }}"
+        when:
+            - ubtu_20_010462_blank_pw_users.stdout | length > 0
+            - not ubtu20stig_disruption_high
+
+      - name: "HIGH | UBTU-20-010462 | PATCH | The Ubuntu operating system must not have accounts configured with blank or null passwords. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-18-010522'
+        when:
+            - ubtu_20_010462_blank_pw_users.stdout | length > 0
+            - not ubtu20stig_disruption_high
+
+      - name: "HIGH | UBTU-20-010462 | PATCH | The Ubuntu operating system must not have accounts configured with blank or null passwords. | Lock accounts with blank passwords"
+        user:
+            name: "{{ item }}"
+            password_lock: true
+        with_items:
+            - "{{ ubtu_20_010462_blank_pw_users.stdout_lines }}"
+        when:
+            - ubtu_20_010462_blank_pw_users.stdout | length > 0
+            - ubtu20stig_disruption_high
+  when:
+      - ubtu_20_010462
+  tags:
+      - UBTU-20-010462
+      - CAT1
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00227
+      - SV-251503r808506_rule
+      - V-251503
+      - users
+      - accounts
+
+- name: "HIGH | UBTU-20-010463 | PATCH | The Ubuntu operating system must not allow accounts configured with blank or null passwords."
+  replace:
+      path: /etc/pam.d/common-password
+      regexp: 'nullok'
+      replace: ''
+  when:
+      - ubtu_20_010463
+  tags:
+      - UBTU-20-010463
+      - CAT1
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00227
+      - SV-251504r832977_rule
+      - V-25150
+      - pamd

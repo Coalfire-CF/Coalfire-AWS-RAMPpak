@@ -1,0 +1,5 @@
+---
+- hosts: ansible1
+  connection: local
+  roles:
+    - ansible_tower_prep

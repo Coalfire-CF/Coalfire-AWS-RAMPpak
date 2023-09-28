@@ -1,0 +1,15 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    secret_ca_passphrase: 'Sup3rS3cr3t!'
+    subject_alt_name:
+      - DNS:esdata1
+      - DNS:esdata2
+      - DNS:esdata3
+      - DNS:esingest1
+      - DNS:esingest2
+      - DNS:kibana1
+      - DNS:kibana2
+  roles:
+    - role: _dev/rootca

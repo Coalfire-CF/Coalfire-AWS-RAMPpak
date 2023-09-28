@@ -1,0 +1,18 @@
+---
+- name: RHEL - 1.2.2 | PATCH | Ensure that the version of Docker is up to date
+  ansible.builtin.yum:
+    name: docker-ce
+    state: latest
+    enablerepo: docker-ce-stable
+    disablerepo:
+      - ansible-2-for-rhel-8-rhui-rpms
+      - rhel-8-baseos-rhui-rpms
+      - rhui-client-config-server-8
+      - rhel-8-appstream-rhui-rpms
+  when: ansible_facts['distribution'] == 'RedHat'
+
+- name: 1.2.2 | PATCH | Ensure that the version of Docker is up to date
+  ansible.builtin.package:
+    name: docker
+    state: latest
+  when: ansible_facts['distribution'] != 'RedHat'

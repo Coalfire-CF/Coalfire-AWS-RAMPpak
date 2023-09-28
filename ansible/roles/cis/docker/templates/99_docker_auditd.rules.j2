@@ -1,0 +1,47 @@
+# 1.1.3 Ensure auditing is configured for the Docker daemon
+-w /usr/bin/dockerd -k docker
+
+# 1.1.4 Ensure auditing is configured for Docker files and directories - /run/containerd
+-a exit,always -F path=/run/containerd -F perm=war -k docker
+
+# 1.1.5 Ensure auditing is configured for Docker files and directories - /var/lib/docker
+-a exit,always -F path=/var/lib/docker -F perm=war -k docker
+
+# 1.1.6 Ensure auditing is configured for Docker files and directories - /etc/docker
+-w /etc/docker -k docker
+
+# 1.1.7 Ensure auditing is configured for Docker files and directories - docker.service
+-w /usr/lib/systemd/system/docker.service -k docker 
+
+# 1.1.8 Ensure auditing is configured for Docker files and directories - containerd.sock
+-w /run/containerd/containerd.sock -k docker 
+
+# 1.1.9 Ensure auditing is configured for Docker files and directories - docker.socket
+-w /var/run/docker.sock -k docker 
+
+# 1.1.10 Ensure auditing is configured for Docker files and directories - /etc/default/docker
+-w /etc/default/docker -k docker 
+
+# 1.1.11 Ensure auditing is configured for Docker files and directories - /etc/docker/daemon.json
+-w /etc/docker/daemon.json -k docker 
+
+# 1.1.12 Ensure auditing is configured for Docker files and directories - /etc/containerd/config.toml
+-w /etc/containerd/config.toml -k docker 
+
+# 1.1.13 Ensure auditing is configured for Docker files and directories - /etc/sysconfig/docker
+-w /etc/sysconfig/docker -k docker 
+
+# 1.1.14 Ensure auditing is configured for Docker files and directories - /usr/bin/containerd
+-w /usr/bin/containerd -k docker
+
+# 1.1.15 Ensure auditing is configured for Docker files and directories - /usr/bin/containerd-shim
+-w /usr/bin/containerd-shim -k docker 
+
+# 1.1.16 Ensure auditing is configured for Docker files and directories - /usr/bin/containerd-shim-runc-v1
+-w /usr/bin/containerd-shim-runc-v1 -k docker 
+
+# 1.1.17 Ensure auditing is configured for Docker files and directories - /usr/bin/containerd-shim-runc-v2
+-w /usr/bin/containerd-shim-runc-v2 -k docker 
+
+# 1.1.18 Ensure auditing is configured for Docker files and directories - /usr/bin/runc
+-w /usr/bin/runc -k docker 

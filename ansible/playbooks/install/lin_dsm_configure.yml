@@ -1,0 +1,41 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/trenddsm_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Install collection trendmicro.deepsec
+      community.general.ansible_galaxy_install:
+        type: collection
+        name: trendmicro.deepsec
+        dest: /usr/share/ansible/collections
+
+- hosts: dsm1
+  gather_facts: false
+  vars:
+    ansible_network_os: trendmicro.deepsec.deepsec
+    ansible_httpapi_use_ssl: true
+    ansible_httpapi_validate_certs: true
+    ansible_connect_timeout: 120
+    ansible_command_timeout: 120
+    ansible_connection: httpapi
+    ansible_httpapi_port: 4119 # Note: This is not shown in any example of the collection, but this variable is required
+    ansible_httpapi_session_key:
+      {
+        "api-secret-key": "{{ hostvars['ansible1']['dsm_api_key'] }}",
+        "api-version": "v1",
+      }
+  roles:
+    - trenddsm/trenddsm_collection_configure
+
+# Note: These are for API calls that aren't available in the trendmicro.deepsec collection
+- hosts: ansible1
+  connection: local
+  gather_facts: false
+  roles:
+    - trenddsm/trenddsm_api_configure

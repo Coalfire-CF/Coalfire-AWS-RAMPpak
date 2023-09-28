@@ -1,0 +1,11 @@
+---
+# tasks file for Docker-CIS
+
+- name: run Section 1 tasks
+  import_tasks: section_1/main.yml
+
+- name: run Section 2 tasks
+  import_tasks: section_2/main.yml
+
+- name: run Section 3 tasks
+  import_tasks: section_3/main.yml

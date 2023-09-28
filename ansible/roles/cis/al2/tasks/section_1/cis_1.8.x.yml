@@ -1,0 +1,16 @@
+---
+
+- name: "1.8 | PATCH | Ensure updates, patches, and additional security software are installed"
+  package:
+      name: "*"
+      state: latest
+  vars:
+      ansible_python_interpreter: /bin/python
+  when:
+      - amazon2cis_rule_1_8
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.8
+      - skip_ansible_lint

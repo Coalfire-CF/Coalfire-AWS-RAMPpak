@@ -1,0 +1,98 @@
+---
+
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/gen_certs_password.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: ansible1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    app_name: splunkidx
+    app_path: splunk
+    private_key_cipher: auto
+    instance_count: 3
+    create_unencrypted: true
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  roles:
+    - gen_tls_cert
+
+- hosts: ansible1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    app_name: splunksh
+    app_path: splunk
+    private_key_cipher: auto
+    instance_count: 2
+    create_unencrypted: true
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  roles:
+    - gen_tls_cert
+
+- hosts: ansible1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    app_name: splunkhf
+    app_path: splunk
+    private_key_cipher: auto
+    instance_count: 1
+    create_unencrypted: true
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  roles:
+    - gen_tls_cert
+
+- hosts: ansible1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    app_name: splunkds
+    app_path: splunk
+    private_key_cipher: auto
+    instance_count: 1
+    create_unencrypted: true
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  roles:
+    - gen_tls_cert
+
+- hosts: ansible1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    app_name: splunkcm
+    app_path: splunk
+    private_key_cipher: auto
+    instance_count: 1
+    create_unencrypted: true
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  roles:
+    - gen_tls_cert
+
+- hosts: ansible1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    app_name: splunkclient
+    app_path: splunk
+    private_key_cipher: auto
+    instance_count: 1
+    create_unencrypted: true
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  roles:
+    - gen_tls_cert

@@ -1,0 +1,399 @@
+---
+
+- name: "5.3.1 | PATCH | Ensure permissions on /etc/ssh/sshd_config are configured"
+  file:
+      path: /etc/ssh/sshd_config
+      state: file
+      owner: root
+      group: root
+      mode: 0600
+  when:
+      - amazon2cis_rule_5_3_1
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.1
+      - ssh
+      - permissions
+
+- name: "5.3.2 | PATCH | Ensure permissions on SSH private host key files are configured"
+  block:
+      - name: "5.3.2 | AUDIT | Ensure permissions on SSH private host key files are configured"
+        find:
+            paths: /etc/ssh
+            patterns: 'ssh_host_*_key'
+            recurse: true
+            file_type: any
+        register: amazon2_5_3_2_priv_results
+
+      - name: "5.3.2 | AUDIT | Ensure permissions on SSH private host key files are configured"
+        file:
+            path: "{{ item.path }}"
+            owner: root
+            group: root
+            mode: 0600
+        with_items:
+            - "{{ amazon2_5_3_2_priv_results.files }}"
+        loop_control:
+            label: "{{ item.path }}"
+  when:
+      - amazon2cis_rule_5_3_2
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.2
+      - ssh
+      - permissions
+
+- name: "5.3.3 | PATCH | Ensure permissions on SSH public host key files are configured"
+  block:
+      - name: "5.3.3 | AUDIT | Ensure permissions on SSH public host key files are configured"
+        find:
+            paths: /etc/ssh
+            patterns: 'ssh_host_*_key'
+            recurse: true
+            file_type: any
+        register: amazon2_5_3_3_pub_results
+
+      - name: "5.3.3 | AUDIT | Ensure permissions on SSH public host key files are configured"
+        file:
+            path: "{{ item.path }}"
+            owner: root
+            group: root
+            mode: 0600
+        with_items:
+            - "{{ amazon2_5_3_3_pub_results.files }}"
+        loop_control:
+            label: "{{ item.path }}"
+  when:
+      - amazon2cis_rule_5_3_3
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.3
+      - ssh
+      - permissions
+
+- name: "5.3.4 | PATCH | Ensure SSH access is limited"
+  block:
+      - name: "5.3.4 | PATCH | Ensure SSH access is limited | Add line to sshd_config for allowusers"
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^AllowUsers"
+            line: AllowUsers {{ amazon2cis_sshd['allowusers'] }}
+        notify: restart sshd
+        when: "amazon2cis_sshd['allowusers']|default('') | length > 0"
+
+      - name: "5.3.4 | PATCH | Ensure SSH access is limited | Add line to sshd_config for allowgroups"
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^AllowGroups"
+            line: AllowGroups {{ amazon2cis_sshd['allowgroups'] }}
+        notify: restart sshd
+        when: "amazon2cis_sshd['allowgroups']|default('') | length > 0"
+
+      - name: "5.3.4 | PATCH | Ensure SSH access is limited | Add line to sshd_config for denyusers"
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^DenyUsers"
+            line: DenyUsers {{ amazon2cis_sshd['denyusers'] }}
+        notify: restart sshd
+        when: "amazon2cis_sshd['denyusers']|default('') | length > 0"
+
+      - name: "5.3.4 | PATCH | Ensure SSH access is limited | Add line to sshd_config for denygroups"
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: "^DenyGroups"
+            line: DenyGroups {{ amazon2cis_sshd['denygroups'] }}
+        notify: restart sshd
+        when: "amazon2cis_sshd['denygroups']|default('') | length > 0"
+  when:
+      - amazon2cis_rule_5_3_4
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.4
+      - ssh
+
+- name: "5.3.5 | PATCH | Ensure SSH LogLevel is appropriate"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#LogLevel|^LogLevel"
+      line: 'LogLevel {{ amazon2cis_ssh_loglevel }}'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_5
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.5
+      - ssh
+
+- name: "5.3.6 | PATCH | Ensure SSH X11 forwarding is disabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#X11Forwarding|^X11Forwarding"
+      line: 'X11Forwarding no'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_6
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.6
+      - ssh
+
+- name: "5.3.7 | PATCH | Ensure SSH MaxAuthTries is set to 4 or less"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^(#)?MaxAuthTries \d'
+      line: "MaxAuthTries {{ amazon2_max_auth_tries }}"
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_7
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.7
+      - ssh
+
+- name: "5.3.8 | PATCH | Ensure SSH IgnoreRhosts is enabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#IgnoreRhosts|^IgnoreRhosts"
+      line: 'IgnoreRhosts yes'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_8
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.8
+      - ssh
+
+- name: "5.3.9 | PATCH | Ensure SSH HostbasedAuthentication is disabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: ^#HostbasedAuthentication|^HostbasedAuthentication"
+      line: 'HostbasedAuthentication no'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_9
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.9
+      - ssh
+
+- name: "5.3.10 | PATCH | Ensure SSH root login is disabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#PermitRootLogin|^PermitRootLogin"
+      line: 'PermitRootLogin no'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_10
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.10
+      - ssh
+
+- name: "5.3.11 | PATCH | Ensure SSH PermitEmptyPasswords is disabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#PermitEmptyPasswords|^PermitEmptyPasswords"
+      line: 'PermitEmptyPasswords no'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_11
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.11
+      - ssh
+
+- name: "5.3.12 | PATCH | Ensure SSH PermitUserEnvironment is disabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#PermitUserEnvironment|^PermitUserEnvironment"
+      line: 'PermitUserEnvironment no'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_12
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.12
+      - ssh
+
+- name: "5.3.13 | PATCH | Ensure only strong Ciphers are used"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^Cipherss'
+      line: "Ciphers {{ amazon2cis_sshd['ciphers'] }}"
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_13
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.13
+      - ssh
+
+- name: "5.3.14 | PATCH | Ensure only strong MAC algorithms are used"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^MACs'
+      line: "MACs {{ amazon2cis_sshd['macs'] }}"
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_14
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.14
+      - ssh
+
+- name: "5.3.15 | PATCH | Ensure only strong Key Exchange algorithms are used"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^KexAlgorithms'
+      line: "KexAlgorithms {{ amazon2cis_sshd['kex'] }}"
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_15
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.15
+      - ssh
+
+- name: "5.3.16 | PATCH | Ensure SSH Idle Timeout Interval is configured"
+  block:
+      - name: "5.3.16 | PATCH | Ensure SSH Idle Timeout Interval is configured | Add line in sshd_config for ClientAliveInterval"
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^ClientAliveInterval'
+            line: "ClientAliveInterval {{ amazon2cis_sshd['clientaliveinterval'] }}"
+        notify: restart sshd
+
+      - name: "5.3.16 | PATCH | Ensure SSH Idle Timeout Interval is configured | Ensure SSH ClientAliveCountMax set to <= 3"
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^ClientAliveCountMax'
+            line: "ClientAliveCountMax 0"
+        notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_16
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.16
+      - ssh
+
+- name: "5.3.17 | PATCH | Ensure SSH LoginGraceTime is set to one minute or less"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#LoginGraceTime|^LoginGraceTime"
+      line: "LoginGraceTime {{ amazon2cis_sshd['logingracetime'] }}"
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_17
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.17
+      - ssh
+
+- name: "5.3.18 | PATCH | Ensure SSH warning banner is configured"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^Banner'
+      line: 'Banner /etc/issue.net'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_18
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.18
+      - ssh
+
+- name: "5.3.19 | PATCH | Ensure SSH PAM is enabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#UsePAM|^UsePAM"
+      line: 'UsePAM yes'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_19
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.19
+      - ssh
+
+- name: "5.3.20 | PATCH | Ensure SSH AllowTcpForwarding is disabled"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#AllowTcpForwarding|^AllowTcpForwarding"
+      line: 'AllowTcpForwarding no'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_20
+  tags:
+      - level2
+      - automated
+      - patch
+      - rule_5.3.20
+      - ssh
+
+- name: "5.3.21 | PATCH | Ensure SSH MaxStartups is configured"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#MaxStartups|^MaxStartups"
+      line: 'MaxStartups 10:30:60'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_21
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.21
+      - ssh
+
+- name: "5.3.22 | PATCH | Ensure SSH MaxSessions is limited"
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#MaxSessions|^MaxSessions"
+      line: 'MaxSessions {{ amazon2cis_ssh_maxsessions }}'
+  notify: restart sshd
+  when:
+      - amazon2cis_rule_5_3_22
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.3.22
+      - ssh

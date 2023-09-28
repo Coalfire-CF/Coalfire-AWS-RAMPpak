@@ -1,0 +1,1 @@
+rhel_08_010590: false # Coalfire Edit: Needed on ansible controller to properly run Selenium automation.

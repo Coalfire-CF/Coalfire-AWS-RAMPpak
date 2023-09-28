@@ -1,0 +1,33 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/common.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: ansible1
+  connection: local
+  become: true
+  roles:
+    - docker
+    - cis/docker
+
+- hosts:
+    - aapcontroller
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - resize_partitions
+    - aap/aap_host_prep
+
+- hosts:
+    - aapcontroller1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - aap/aap_controller_host_prep

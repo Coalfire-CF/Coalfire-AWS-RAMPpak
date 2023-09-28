@@ -1,0 +1,92 @@
+---
+
+- name: "1.5.1 | PATCH | Ensure core dumps are restricted"
+  block:
+      - name: "1.5.1 | PATCH | Ensure core dumps are restricted | Update limits.conf file"
+        lineinfile:
+            state: present
+            dest: /etc/security/limits.conf
+            regexp: '^#?\\*.*core'
+            line: '*                hard    core            0'
+            insertbefore: '^# End of file'
+
+      - name: "1.5.1 | PATCH | Ensure core dumps are restricted | Set active kernel parameter"
+        sysctl:
+            name: fs.suid_dumpable
+            value: '0'
+            state: present
+            reload: true
+            sysctl_set: true
+            ignoreerrors: true
+
+      - name: "1.5.1 | PATCH | Ensure core dumps are restricted | coredump.conf"
+        lineinfile:
+            dest: /etc/systemd/coredump.conf
+            regexp: "{{ item.regex }}"
+            line: "{{ item.line }}"
+            create: true
+            mode: 0644
+        notify: systemd daemon reload
+        with_items:
+            - { regex: '^Storage', line: 'Storage=none' }
+            - { regex: '^ProcessSizeMax', line: 'ProcessSizeMax=0' }
+  when:
+      - amazon2cis_rule_1_5_1
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.5.1
+      - sysctl
+
+- name: "1.5.2 | PATCH | Ensure XD/NX support is enabled"
+  block:
+      - name: "1.5.2 | PATCH | Ensure XD/NX support is enabled | Get NX/DX status"
+        shell: dmesg|grep -E "NX|XD" | grep " active"
+        changed_when: false
+        failed_when: false
+        register: amazon2cis_1_5_2_nx_dx_status
+
+      - name: "1.5.2 | PATCH | Ensure XD/NX support is enabled | Alert on non-active status"
+        debug:
+            msg:
+                - "Alert! You do not have XD/NX support enabled. Please activate if your system supports it"
+        when: "'active' not in amazon2cis_1_5_2_nx_dx_status.stdout"
+  when:
+      - amazon2cis_rule_1_5_2
+  tags:
+      - level1
+      - patch
+      - automated
+      - rule_1.5.2
+      - skip_ansible_lint
+
+- name: "1.5.3 | PATCH | Ensure address space layout randomization (ASLR) is enabled"
+  sysctl:
+      name: kernel.randomize_va_space
+      value: '2'
+      state: present
+      reload: true
+      sysctl_set: true
+      ignoreerrors: true
+  when:
+      - amazon2cis_rule_1_5_3
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.5.3
+
+- name: "1.5.4 | PATCH | Ensure prelink is not installed"
+  package:
+      name: prelink
+      state: absent
+  vars:
+      ansible_python_interpreter: /bin/python
+  when:
+      - amazon2cis_rule_1_5_4
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.5.4

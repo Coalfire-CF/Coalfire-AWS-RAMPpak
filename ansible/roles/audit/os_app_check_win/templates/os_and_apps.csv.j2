@@ -1,0 +1,7 @@
+hostname,operating_system,SoftwareName,Version
+{% for host in ansible_play_hosts %}
+{% set distribution = hostvars[host]['ansible_facts']['distribution'] %}
+{% for software in hostvars[host]['win_software']['result'] %}
+{{ host }},{{ distribution }},{{ software['SoftwareName'] }},{{ software['Version'] }}
+{% endfor %}
+{% endfor %}

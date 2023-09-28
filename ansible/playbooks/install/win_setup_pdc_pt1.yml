@@ -1,0 +1,51 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Run AWS tasks
+      when: ansible_system_vendor == 'Amazon EC2'
+      block:
+        - name: Load AWS vars
+          ansible.builtin.include_vars: ../../vars/aws/pdc_pt1.yml
+
+        # This is here because the local connection type seems to ignore group_vars.  It's not a problem for RHEL and AL2 since /usr/bin/python3
+        # both point to Python 3.9, but Ubuntu 20.04 has it pointing to Python 3.8
+        - name: Ubuntu - Set Python interpreter
+          ansible.builtin.set_fact:
+            ansible_python_interpreter: /usr/bin/python3.9
+          when:
+            - ansible_facts['distribution'] == 'Ubuntu'
+            - not ansible_facts['distribution_version'] == '22.04'
+
+        - name: Fetch Instance Admin password
+          community.aws.ec2_win_password:
+            instance_id: "{{ pdc_instance_id }}"
+            region: "{{ aws_region }}"
+            key_data: "{{ key_data }}"
+            wait: true
+            wait_timeout: 600
+          register: instance_password
+
+        - name: "Add instance password to dummy host" # Only known workaround to store the password on a dummy hostvar
+          ansible.builtin.add_host:
+            name: "INSTANCE_PASSWORD_HOLDER"
+            instance_password: "{{ instance_password.win_password }}"
+          changed_when: false
+      ### End Run AWS tasks Block ###
+
+- hosts: dc1
+  gather_facts: false
+  vars:
+    ansible_user: Administrator
+    ansible_password: "{{ hostvars['INSTANCE_PASSWORD_HOLDER']['instance_password'] }}"
+  tasks:
+    - name: Wait for system to become reachable over WinRM
+      ansible.builtin.wait_for_connection:
+        timeout: 240
+
+- hosts: dc1
+  vars:
+    ansible_user: Administrator
+    ansible_password: "{{ hostvars['INSTANCE_PASSWORD_HOLDER']['instance_password'] }}"
+  roles:
+    - primary_domain_controller

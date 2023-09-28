@@ -1,0 +1,26 @@
+---
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  vars:
+    ubtu_20_010016: false # Coalfire Edit: Seems to cause boot failures in resulting AMI if enabled during Packer build
+  tasks:
+    # Needed for EKS worker node
+    - name: Enable IPv4 Forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: true
+        state: present
+        reload: true
+        ignoreerrors: true
+      tags:
+        - always
+
+    - name: Pass variables to role
+      ansible.builtin.include_role:
+        name: ubuntu20
+      tags:
+        - always

@@ -1,0 +1,7 @@
+---
+# Common
+ssm_fips_endpoint: "{% if is_gov | bool %}ssm{% else %}ssm-fips{% endif %}"
+ssm_endpoint: "{{ 'https://' + ssm_fips_endpoint + '.' + aws_region + '.amazonaws.com' }}"
+ca_secrets_path: "{{ lookup('amazon.aws.aws_ssm', '/production/ca_secrets_path', region=aws_region, endpoint=ssm_endpoint) }}"
+
+rootca_cert: "{{ lookup('amazon.aws.aws_ssm', ca_secrets_path + 'root_ca_pub.pem', region=aws_region, endpoint=ssm_endpoint) }}"

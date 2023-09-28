@@ -1,0 +1,25 @@
+---
+
+- name: "SECTION | 5.1 | Configure time-based job schedulers"
+  include_tasks: cis_5.1.x.yml
+
+- name: "SECTION | 5.2 | Configure sudo"
+  include_tasks: cis_5.2.x.yml
+
+- name: "SECTION | 5.3 | Configure SSH Server"
+  include_tasks: cis_5.3.x.yml
+
+- name: "SECTION | 5.4 | Configure PAM"
+  include_tasks: cis_5.4.x.yml
+
+- name: "SECTION | 5.5.1.x | Set Shadow Password Suite Parameters"
+  include_tasks: cis_5.5.1.x.yml
+
+- name: "SECTION | 5.5.x"
+  include_tasks: cis_5.5.x.yml
+
+- name: "SECTION | 5.6.x"
+  include_tasks: cis_5.6.x.yml
+
+- name: "SECTION | 5.7.x"
+  include_tasks: cis_5.7.x.yml

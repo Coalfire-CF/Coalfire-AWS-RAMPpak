@@ -1,0 +1,2 @@
+root_ca_store: /etc/pki/ca-trust/source/anchors/cacert.pem
+update_ca_handler: rhel update ca trust

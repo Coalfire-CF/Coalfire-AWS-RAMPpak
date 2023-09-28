@@ -1,0 +1,39 @@
+---
+
+- name: "1.4.1 | PATCH | Ensure permissions on bootloader config are configured"
+  file:
+      path: "{{ amazon2cis_bootloader_file }}"
+      owner: root
+      group: root
+      mode: 0600
+  when:
+      - amazon2cis_legacy_boot
+      - amazon2cis_rule_1_4_1
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.4.1
+      - grub
+
+- name: "1.4.2 | PATCH | Ensure authentication required for single user mode"
+  block:
+      - name: "1.4.2 | PATCH | Ensure authentication required for single user mode | Emergency service"
+        lineinfile:
+            dest: /usr/lib/systemd/system/emergency.service
+            regexp: '/sbin/sulogin'
+            line: 'ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --fail --no-block default'
+
+      - name: "1.4.2 | PATCH | Ensure authentication required for single user mode | Rescue service"
+        lineinfile:
+            dest: /usr/lib/systemd/system/rescue.service
+            regexp: '/sbin/sulogin'
+            line: 'ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --fail --no-block default'
+  when:
+      - amazon2cis_rule_1_4_2
+      - ansible_facts['distribution_major_version'] is version('2', '>=')
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_1.4.2

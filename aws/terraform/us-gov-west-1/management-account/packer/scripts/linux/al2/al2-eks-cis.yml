@@ -1,0 +1,44 @@
+---
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  tasks:
+    # Needed for EKS worker node
+    - name: Enable IPv4 Forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: true
+        state: present
+        reload: true
+        ignoreerrors: true
+      tags:
+        - always
+
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  vars:
+    amazon2cis_rule_3_2_1: false # Kubernetes requires IPV4 forwarding on worker nodes
+  roles:
+    - al2
+
+# Note: Adding separate task for these rules since the original implementation directly modifies /etc/pam.d/system-auth and /etc/pam.d/password-auth
+# Then it prevents authconfig from modifying those files, which causes problems with SSSD (realm, AD) logins.
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: 5.4.2 | PATCH | Ensure lockout for failed password attempts is configured
+      ansible.builtin.command:
+        cmd: authconfig --enablefaillock --faillockargs='deny=5 unlock_time=900' --update
+
+    - name: 5.4.3 | PATCH | Ensure password hashing algorithm is SHA-512
+      ansible.builtin.command:
+        cmd: authconfig --passalgo=sha512 --update

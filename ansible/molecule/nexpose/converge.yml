@@ -1,0 +1,13 @@
+---
+- name: Nexpose nodes
+  hosts: nexpose
+  vars:
+    ansible_user: ansible
+    admin_first_name: Herman
+    admin_last_name: Wong
+    admin_password: 'Sup3rS3cr3t!'
+    is_container: true
+    nexpose_api_url: "https://localhost:3780/api/3"
+    validate_certs: false
+  roles:
+    - role: nexpose

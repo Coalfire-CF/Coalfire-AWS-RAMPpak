@@ -1,0 +1,73 @@
+---
+- name: Load AWS vars
+  ansible.builtin.include_vars: aws.yml
+  when: ansible_system_vendor == 'Amazon EC2'
+
+- name: Get AD Users and Groups
+  ansible.windows.win_powershell:
+    script: |
+      Import-Module ActiveDirectory
+      $Groups = Get-ADGroup -Filter 'GroupCategory -eq "Security" -and Members -ne "$null"'
+
+        $Ansible.Result = foreach( $Group in $Groups ){
+          Get-ADGroupMember -Identity $Group | foreach {
+              [pscustomobject]@{
+                  GroupName = $Group.Name
+                  FullName = $_.Name
+                  SamAccountName = $_.SamAccountName
+                  }
+              }
+          }
+  register: ad_users_and_groups
+  changed_when: false
+
+- name: Create CSV from Template
+  ansible.builtin.template:
+    src: ad_users_and_groups.csv.j2
+    dest: "/tmp/ad_users_and_groups_{{ ansible_date_time.iso8601 }}.csv"
+    force: true
+    mode: "0600"
+  delegate_to: localhost
+  run_once: true
+
+- name: Create Windows Folder in S3
+  amazon.aws.s3_object:
+    aws_config:
+      s3:
+        addressing_style: virtual
+    bucket: "{{ audit_bucket_name }}"
+    object: "/windows/ad_users_and_groups"
+    mode: create
+    region: "{{ aws_region }}"
+    endpoint_url: "https://s3-fips.{{ aws_region }}.amazonaws.com"
+    permission: []
+  when: ansible_system_vendor == 'Amazon EC2'
+  delegate_to: localhost
+  run_once: true
+
+- name: Upload CSV to S3
+  amazon.aws.s3_object:
+    aws_config:
+      s3:
+        addressing_style: virtual
+    bucket: "{{ audit_bucket_name }}"
+    object: "/windows/ad_users_and_groups/ad_users_and_groups_{{ ansible_date_time.iso8601 }}.csv"
+    src: "/tmp/ad_users_and_groups_{{ ansible_date_time.iso8601 }}.csv"
+    mode: put
+    overwrite: latest # "different" uses MD5 which is disabled in FIPS mode
+    region: "{{ aws_region }}"
+    endpoint_url: "https://s3-fips.{{ aws_region }}.amazonaws.com"
+    encryption_kms_key_id: "{{ s3_key_id }}"
+    encrypt: true
+    encryption_mode: aws:kms
+    permission: []
+  when: ansible_system_vendor == 'Amazon EC2'
+  delegate_to: localhost
+  run_once: true
+
+- name: Remove Temp CSV
+  ansible.builtin.file:
+    path: "/tmp/ad_users_and_groups_{{ ansible_date_time.iso8601 }}.csv"
+    state: absent
+  delegate_to: localhost
+  run_once: true

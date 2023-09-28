@@ -1,0 +1,46 @@
+---
+scenario:
+  name: burpsuite
+  test_sequence:
+    - create
+    - converge
+    - idempotence
+    - verify
+driver:
+  name: docker
+platforms:
+  - name: burpsuite1
+    image: docker.io/redhat/ubi8-init:latest
+    pre_build_image: false
+    dockerfile: ../../common/ubi8.dockerfile.j2
+    tmpfs:
+      - /run
+      - /tmp:exec
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    capabilities:
+      - SYS_ADMIN
+    command: "/usr/sbin/init"
+    groups:
+      - burpsuite
+    networks:
+      - name: net1
+    ulimits:
+      - memlock:4294967296:4294967296  #4194304:4194304 #Intended to limit to 4GB RAM per container
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: "../../roles"
+  config_options:
+    defaults:
+      interpreter_python: auto_silent
+      callbacks_enabled: profile_tasks, timer, yaml
+      verbosity: 0
+    ssh_connection:
+      pipelining: false
+  inventory:
+    host_vars:
+      all:
+        ansible_user: ansible
+verifier:
+  name: ansible

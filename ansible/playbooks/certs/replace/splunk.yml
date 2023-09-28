@@ -1,0 +1,6 @@
+---
+- name: Generate Splunk certs
+  ansible.builtin.import_playbook: ../splunk_gen_certs.yml
+
+- name: Import Splunk Deployment playbook
+  ansible.builtin.import_playbook: ../../install/lin_splunk_install.yml

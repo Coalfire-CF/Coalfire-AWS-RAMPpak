@@ -1,0 +1,7 @@
+---
+
+- name: "SECTION | 3.1.x | Worker Node Configuration Files"
+  import_tasks: cis_3.1.x.yml
+
+- name: "SECTION | 3.2.x | Kubelet"
+  import_tasks: cis_3.2.x.yml

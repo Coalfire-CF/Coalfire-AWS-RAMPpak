@@ -1,0 +1,24 @@
+---
+
+- name: "PREREQ | Add the required packages installed | Python2"
+  package:
+      name: "{{ item }}"
+      state: latest
+  register: python2_packages
+  with_items:
+      - python2-rpm
+      - libselinux-python
+  vars:
+      ansible_python_interpreter: "{{ python2_bin }}"
+
+- name: "PREREQ | Check required packages installed | Python3 "
+  package:
+      name: "{{ item }}"
+      state: present
+  register: python3reqs_installed
+  with_items:
+      - python3-rpm
+  when:
+      - ansible_python.version.major is version('3', '=')
+  vars:
+      ansible_python_interpreter: "{{ python2_bin }}"

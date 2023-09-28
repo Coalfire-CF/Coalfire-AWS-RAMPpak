@@ -1,0 +1,9 @@
+---
+aws_region: "{{ lookup('ansible.builtin.env', 'AWS_REGION') }}"
+is_gov: "{{ lookup('ansible.builtin.env', 'IS_GOV') | bool }}"
+ssm_fips_endpoint: "{% if is_gov %}ssm{% else %}ssm-fips{% endif %}"
+ssm_endpoint: "{{ 'https://' + ssm_fips_endpoint + '.' + aws_region + '.amazonaws.com' }}"
+ad_secrets_path: "{{ lookup('amazon.aws.aws_ssm', '/production/ad_secrets_path', endpoint=ssm_endpoint) }}"
+ec2_private_key_path: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'ec2_private_key_path', endpoint=ssm_endpoint) }}"
+key_data: "{{ lookup('amazon.aws.aws_ssm', ec2_private_key_path, endpoint=ssm_endpoint) }}"
+pdc_instance_id: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'pdc_instance_id', endpoint=ssm_endpoint) }}"

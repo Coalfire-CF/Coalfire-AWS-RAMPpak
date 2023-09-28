@@ -1,0 +1,47 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: dc1
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+  tasks:
+    - name: Add svc_uat_priv to AnsibleAdmins
+      microsoft.ad.group:
+        name: AnsibleAdmins
+        members:
+          - svc_uat_priv
+        state: present
+      notify: pause
+  handlers:
+    - name: pause
+      ansible.builtin.pause:
+        minutes: 1
+
+# Did not include "ansible-tower" service because its state can also be active(exited) and not active(running)
+- hosts: towercontroller
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 443
+    service_names:
+      - redis
+      - nginx
+      - supervisord
+  roles:
+    - tests/linux_app
+
+- hosts: towercontroller
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - tests/ansible_tower

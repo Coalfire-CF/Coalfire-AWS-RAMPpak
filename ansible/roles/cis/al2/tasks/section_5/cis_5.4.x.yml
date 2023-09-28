@@ -1,0 +1,131 @@
+---
+
+- name: "5.4.1 | PATCH | Ensure password creation requirements are configured"
+  lineinfile:
+      path: /etc/security/pwquality.conf
+      regexp: '^{{ item.key }}'
+      line: '{{ item.key }} = {{ item.value }}'
+  with_items:
+      - { key: 'minlen', value: '14' }
+      - { key: 'minclass', value: '4' }
+  when:
+      - amazon2cis_rule_5_4_1
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.4.1
+      - pamd
+
+- name: |
+        "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured
+         5.4.3 | PATCH | Ensure password hashing algorithm is SHA-512
+         5.4.4 | PATCH | Ensure password reuse is limited"
+  block:
+      - name: "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured | Add deny count and unlock time for preauth"
+        lineinfile:
+            path: /etc/pam.d/{{ item }}
+            state: present
+            line: "auth        required      pam_faillock.so preauth audit silent deny={{ amazon2cis_pam_faillock.attempts }}{{ (amazon2cis_pam_faillock.fail_for_root) | ternary(' even_deny_root ',' ') }}unlock_time={{ amazon2cis_pam_faillock.unlock_time }}"
+            insertafter: '^#?auth ?'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+
+      - name: "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured | Add success and default settings to pam_unix.so"
+        lineinfile:
+            path: /etc/pam.d/{{ item }}
+            line: "auth        [success=1 default=bad] pam_unix.so"
+            insertafter: '^#?auth ?'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+
+      - name: "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured | Add default, deny count, and unlock times for authfail"
+        lineinfile:
+            path: /etc/pam.d/{{ item }}
+            line: "auth        [default=die] pam_faillock.so authfail audit deny={{ amazon2cis_pam_faillock.attempts }}{{ (amazon2cis_pam_faillock.fail_for_root) | ternary(' even_deny_root ',' ') }}unlock_time={{ amazon2cis_pam_faillock.unlock_time }}"
+            insertafter: '^#?auth ?'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+
+      - name: "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured | Add deny count and unlock times to authsucc"
+        lineinfile:
+            path: /etc/pam.d/{{ item }}
+            line: "auth        sufficient    pam_faillock.so authsucc audit deny={{ amazon2cis_pam_faillock.attempts }}{{ (amazon2cis_pam_faillock.fail_for_root) | ternary(' even_deny_root ',' ') }}unlock_time={{ amazon2cis_pam_faillock.unlock_time }}"
+            insertafter: '^#?auth ?'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+    
+      - name: "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured | Activate deny count and unlock times to failed password"
+        lineinfile:
+            path: /etc/pam.d/{{ item }}
+            line: "account     required      pam_faillock.so"
+            insertbefore: '^#?account ?'
+            firstmatch: true
+            regexp: '^\s*account\s+required\s+pam_faillock.so\s*'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+
+      - name: "5.4.3 | PATCH | Ensure password hashing algorithm is SHA-512 | add sha512 settings"
+        lineinfile:
+            path: /etc/pam.d/{{ item }}
+            line: "password    sufficient    pam_unix.so {{ amazon2cis_pam_faillock.pwhash }} shadow nullok try_first_pass use_authtok"
+            insertafter: '^#?password ?'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+
+      - name: "5.4.4 | PATCH | Ensure password reuse is limited | add remember settings"
+        lineinfile:
+            path: /etc/pam.d/{{ item }}
+            line: "password    required    pam_pwhistory.so remember={{ amazon2cis_pam_faillock.remember }}"
+            insertafter: '^#?password ?'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+
+      # The two steps below were added to keep authconfig from overwritting the above configs. This follows steps from here: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/security_guide/chap-hardening_your_system_with_tools_and_services
+      # With the steps below you will score five (5) points lower due to false positive results
+
+      - name: |
+          "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured | Copy system/passowrd-auth to system/password-auth-local
+           5.4.3 | PATCH | Ensure password hashing algorithm is SHA-512"
+           5.4.4 | PATCH | Ensure password reuse is limited | Copy system/password-auth to system/password-auth-local"
+        copy:
+            src: /etc/pam.d/{{ item }}
+            dest: /etc/pam.d/{{ item }}-local
+            remote_src: true
+            owner: root
+            group: root
+            mode: '0644'
+        with_items:
+            - "system-auth"
+            - "password-auth"
+
+      - name: |
+          "5.4.2 | PATCH | Ensure lockout for failed password attempts is configured | Setup symbolic link
+           5.4.4 | PATCH | Ensure password reuse is limited | Setup symbolic link"
+        file:
+            src: /etc/pam.d/{{ item }}-local
+            dest: /etc/pam.d/{{ item }}
+            state: link
+            force: true
+        with_items:
+            - "system-auth"
+            - "password-auth"
+  when:
+      - amazon2cis_rule_5_4_2
+      - amazon2cis_rule_5_4_3
+      - amazon2cis_rule_5_4_4
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.4.2
+      - rule_5.4.3
+      - rule_5.4.4
+      - pamd

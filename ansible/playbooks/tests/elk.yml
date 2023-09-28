@@ -1,0 +1,76 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: dc1
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+  tasks:
+    - name: Add svc_uat_priv to ElasticAdmins
+      microsoft.ad.group:
+        name: ElasticAdmins
+        members:
+          - svc_uat_priv
+        state: present
+      notify: pause
+  handlers:
+    - name: pause
+      ansible.builtin.pause:
+        minutes: 1
+
+- hosts: data
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 9200
+      - 9300
+    service_names:
+      - elasticsearch
+      - elastic-agent
+  roles:
+    - tests/linux_app
+
+- hosts: ingest
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 9200
+      - 9300
+      - 5514
+      - 6514
+      - 8220
+    service_names:
+      - elasticsearch
+      - elastic-agent
+  roles:
+    - tests/linux_app
+
+- hosts: kibanaserver
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 5601
+    service_names:
+      - kibana
+      - elastic-agent
+  roles:
+    - tests/linux_app
+
+- hosts: elasticsearch
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - tests/elk

@@ -1,0 +1,105 @@
+---
+
+- name: "5.5.2 | PATCH | Ensure system accounts are secured"
+  block:
+      - name: "5.5.2 | PATCH | Ensure system accounts are secured | Set nologin"
+        user:
+            name: "{{ item.id }}"
+            shell: /usr/sbin/nologin
+        with_items:
+            - "{{ amazon2cis_passwd }}"
+        when:
+            - item.id != "root"
+            - item.id != "sync"
+            - item.id != "shutdown"
+            - item.id != "halt"
+            - item.gid < amazon2cis_int_gid
+            - item.shell != "      /bin/false"
+            - item.shell != "      /usr/sbin/nologin"
+        loop_control:
+            label: "{{ item.id }}"
+
+      - name: "5.5.2 | PATCH | Ensure system accounts are secured | Lock accounts"
+        user:
+            name: "{{ item.id }}"
+            password_lock: true
+        with_items:
+            - "{{ amazon2cis_passwd }}"
+        when:
+            - item.id != "halt"
+            - item.id != "shutdown"
+            - item.id != "sync"
+            - item.id != "root"
+            - item.gid < amazon2cis_int_gid
+            - item.shell != "      /bin/false"
+            - item.shell != "      /usr/sbin/nologin"
+        loop_control:
+            label: "{{ item.id }}"
+  when:
+      - amazon2cis_rule_5_5_2
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.5.2
+      - accounts
+
+- name: "5.5.3 | PATCH | Ensure default group for the root account is GID 0"
+  user:
+      name: root
+      group: "0"
+  when:
+      - amazon2cis_rule_5_5_3
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.5.3
+      - accounts
+      - root
+
+- name: "5.5.4 | PATCH | Ensure default user shell timeout is configured"
+  blockinfile:
+      path: "{{ item.dest }}"
+      state: "{{ item.state }}"
+      create: true
+      mode: 0644
+      marker: "# {mark} ANSIBLE MANAGED"
+      block: |
+        # Set session timeout - CIS ID AMZN LNX 2-5.5.4
+        TMOUT={{ amazon2cis_shell_session_timeout.timeout }}
+        readonly TMOUT
+        export TMOUT
+  with_items:
+      - { dest: "{{ amazon2cis_shell_session_timeout.file }}", state: present }
+      - { dest: /etc/profile, state: "{{ (amazon2cis_shell_session_timeout.file == '/etc/profile') | ternary('present', 'absent') }}" }
+  when:
+      - amazon2cis_rule_5_5_4
+  tags:
+      - level2
+      - automated
+      - patch
+      - rule_5.5.4
+      - account
+
+- name: "5.5.5 | PATCH | Ensure default user umask is configured"
+  block:
+      - name: "5.5.5 | PATCH | Ensure default user umask is configured | Set umask for /etc/bashrc"
+        replace:
+            path: /etc/bashrc
+            regexp: '(^\s+umask) 002'
+            replace: '\1 027'
+
+      - name: "5.5.5 | PATCH | Ensure default user umask is configured | Set umask for /etc/profile"
+        replace:
+            path: /etc/profile
+            regexp: '(^\s+umask) 002'
+            replace: '\1 027'
+  when:
+      - amazon2cis_rule_5_5_5
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_5.5.5
+      - account

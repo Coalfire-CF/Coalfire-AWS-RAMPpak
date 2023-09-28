@@ -1,0 +1,11 @@
+---
+# Common
+ad_secrets_path: "{{ lookup('amazon.aws.aws_ssm', '/production/ad_secrets_path', endpoint=ssm_endpoint) }}"
+aws_region: "{{ lookup('ansible.builtin.env', 'AWS_REGION') | bool }}"
+is_gov: "{{ lookup('ansible.builtin.env', 'IS_GOV') }}"
+ssm_fips_endpoint: "{% if is_gov %}ssm{% else %}ssm-fips{% endif %}"
+ssm_endpoint: "{{ 'https://' + ssm_fips_endpoint + '.' + aws_region + '.amazonaws.com' }}"
+svc_ansible_password: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'svc_ansible', endpoint=ssm_endpoint) }}"
+
+svc_uat_priv_password: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'svc_uat_priv', endpoint=ssm_endpoint, on_missing='warn') }}"
+svc_uat_unpriv_password: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'svc_uat_unpriv', endpoint=ssm_endpoint, on_missing='warn') }}"

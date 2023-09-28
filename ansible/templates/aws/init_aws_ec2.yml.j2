@@ -1,0 +1,39 @@
+---
+# aws ec2 ansible dynamic inventory plugin
+plugin: amazon.aws.aws_ec2
+
+{% if is_gov %}
+regions:
+  - us-gov-west-1
+  - us-gov-east-1
+
+{% else %}
+regions:
+  - us-east-1
+  - us-west-1
+  - us-west-2
+  - us-east-2
+
+{% endif %}
+# set strict to False
+# if True this will make invalid entries
+# a fatal error
+strict: false
+
+keyed_groups:
+  - key: tags['Role']
+    separator: ""
+  - key: tags['SecondaryRole']
+    separator: ""
+hostnames:
+  # a list in order of precedence for hostname variables.
+  - tag:Name
+
+groups:
+  management: tags['OSType'] == 'Windows' or tags['OSType'] == 'Linux'
+  windows: tags['OSType'] == 'Windows'
+  linux: tags['OSType'] == 'Linux'
+
+# Must use underscores here instead of hyphens.
+compose:
+  ansible_host: private_ip_address

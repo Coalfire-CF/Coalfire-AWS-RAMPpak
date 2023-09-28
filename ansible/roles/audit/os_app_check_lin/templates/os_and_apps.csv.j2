@@ -1,0 +1,8 @@
+hostname,distribution,distribution_version,package_name,package_version
+{% for host in ansible_play_hosts %}
+{% set distribution = hostvars[host]['ansible_facts']['distribution'] %}
+{% set distribution_version = hostvars[host]['ansible_facts']['distribution_version'] %}
+{% for package in hostvars[host]['ansible_facts']['packages'] | dict2items %}
+{{ host }},{{ distribution }},{{ distribution_version }},{{ package.value[0].name }},{{ package.value[0].version }}
+{% endfor %}
+{% endfor %}

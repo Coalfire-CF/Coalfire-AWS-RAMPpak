@@ -1,0 +1,15 @@
+---
+- hosts: ansible1
+  connection: local
+  become: true
+  tasks:
+    # Note: Needed for AL2 because ansible binaries are stored in this path
+    - name: Add /usr/local/bin to sudoers path
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: "^Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin"
+        line: "Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin"
+        validate: "/usr/sbin/visudo -cf %s"
+      when:
+        - ansible_facts['distribution'] == 'Amazon'

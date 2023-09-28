@@ -1,0 +1,52 @@
+---
+- name: "3.2.1 | PATCH | Ensure IP forwarding is disabled"
+  block:
+      - name: "3.2.1 | PATCH | Ensure IP forwarding is disabled | IPv4"
+        sysctl:
+            name: net.ipv4.ip_forward
+            value: '0'
+            state: present
+            reload: true
+            ignoreerrors: true
+        notify: sysctl flush ipv4 route table
+
+      - name: "AUTOMATED | 3.2.1 | PATCH | Ensure IP forwarding is disabled | IPv6"
+        sysctl:
+            name: net.ipv6.conf.all.forwarding
+            value: '0'
+            state: present
+            reload: true
+            ignoreerrors: true
+        notify: sysctl flush ipv6 route table
+        when: amazon2cis_ipv6_required
+  when:
+      - not amazon2cis_is_router
+      - amazon2cis_rule_3_2_1
+      - amazon2cis_ipv6_required
+  tags:
+      - level1
+      - sysctl
+      - patch
+      - rule_3.2.1
+
+- name: "3.2.2 | PATCH | Ensure packet redirect sending is disabled"
+  sysctl:
+      name: '{{ item.name }}'
+      value: '{{ item.value }}'
+      sysctl_set: true
+      state: present
+      reload: true
+      ignoreerrors: true
+  notify: sysctl flush ipv4 route table
+  with_items:
+      - { name: net.ipv4.conf.all.send_redirects, value: 0 }
+      - { name: net.ipv4.conf.default.send_redirects, value: 0 }
+  when:
+      - not amazon2cis_is_router
+      - amazon2cis_rule_3_2_2
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_3.2.2
+      - sysctl

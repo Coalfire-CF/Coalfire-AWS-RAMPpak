@@ -19,43 +19,52 @@ output "dynamo_kms_key_id" {
 }
 
 output "ebs_kms_key_arn" {
-  value = module.account-setup.ebs_kms_key_arn
+  value = module.account-setup.ebs_kms_key_arn[0]
 }
 
 output "ebs_kms_key_id" {
-  value = module.account-setup.ebs_kms_key_id
+  value = module.account-setup.ebs_kms_key_id[0]
 }
 
 output "sm_kms_key_arn" {
-  value = module.account-setup.sm_kms_key_arn
+  value = module.account-setup.sm_kms_key_arn[0]
 }
 
 output "sm_kms_key_id" {
-  value = module.account-setup.sm_kms_key_id
+  value = module.account-setup.sm_kms_key_id[0]
 }
 
 output "backup_kms_key_arn" {
-  value = module.account-setup.backup_kms_key_arn
+  value = module.account-setup.backup_kms_key_arn[0]
 }
 
 output "backup_kms_key_id" {
-  value = module.account-setup.backup_kms_key_id
+  value = module.account-setup.backup_kms_key_id[0]
 }
 
 output "lambda_kms_key_arn" {
-  value = module.account-setup.lambda_kms_key_arn
+  value = module.account-setup.lambda_kms_key_arn[0]
 }
 
 output "lambda_kms_key_id" {
-  value = module.account-setup.lambda_kms_key_id
+  value = module.account-setup.lambda_kms_key_id[0]
 }
 
 output "rds_kms_key_arn" {
-  value = module.account-setup.rds_kms_key_arn
+  value = module.account-setup.rds_kms_key_arn[0]
 }
 
 output "rds_kms_key_id" {
-  value = module.account-setup.lambda_kms_key_id
+  value = module.account-setup.rds_kms_key_id[0]
+}
+
+
+output "cloudwatch_kms_key_arn" {
+  value = module.account-setup.cloudwatch_kms_key_arn[0]
+}
+
+output "cloudwatch_kms_key_id" {
+  value = module.account-setup.cloudwatch_kms_key_id[0]
 }
 
 output "additional_kms_key_arns" {

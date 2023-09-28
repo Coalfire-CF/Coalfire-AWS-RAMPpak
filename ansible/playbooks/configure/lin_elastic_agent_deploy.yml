@@ -1,0 +1,18 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/common.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts:
+    - linux:!elasticsearch
+  strategy: free
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    elastic_version: 8.5.3
+  roles:
+    - elk/lin_deploy_elastic_agent

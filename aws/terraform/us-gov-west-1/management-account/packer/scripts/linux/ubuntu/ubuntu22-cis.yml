@@ -1,0 +1,31 @@
+---
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  vars:
+    ubtu22cis_rule_5_2_16: false # Coalfire Edit: SSH Forwarding is needed for Linux bastion
+  tasks:
+    # Note: Using this method to generate random password hash due to issues using password_hash plugin
+    - name: Generate random password
+      ansible.builtin.command:
+        cmd: "openssl passwd -6 '{{ lookup('ansible.builtin.password', '/dev/null') }}'"
+      register: random_pass
+      changed_when: false
+      no_log: true
+      tags:
+        - always
+
+    - name: Set password variable
+      ansible.builtin.set_fact:
+        ubtu22cis_root_pw: "{{ random_pass.stdout }}"
+      no_log: true
+      tags:
+        - always
+
+    - name: Pass variables to role
+      ansible.builtin.include_role:
+        name: ubuntu22
+      tags:
+        - always

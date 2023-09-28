@@ -1,0 +1,37 @@
+---
+- name: Load AWS vars
+  ansible.builtin.include_vars: aws.yml
+  when: ansible_system_vendor == 'Amazon EC2'
+
+- name: Set platform/version specific variables
+  ansible.builtin.include_vars: "{{ rolename_vars_file }}"
+  loop:
+    - "{{ ansible_facts['os_family'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+  vars:
+    rolename_vars_file: "{{ role_path }}/vars/{{ item }}"
+  when: rolename_vars_file is file
+
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: Create and Mount /var/lib/docker
+  ansible.builtin.include_tasks: create_and_mount_disk.yml
+  when: ansible_mounts | selectattr('mount', 'equalto', '/var/lib/docker') | list | length == 0 # Skip if /var/lib/docker mount already exists
+
+- name: Install Docker
+  ansible.builtin.include_tasks: install_docker.yml
+  when: '"docker.service" not in ansible_facts.services'
+
+- name: Ensure group "docker" exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: Add default user to docker group
+  ansible.builtin.user:
+    name: "{{ default_user }}"
+    groups: docker
+    append: true

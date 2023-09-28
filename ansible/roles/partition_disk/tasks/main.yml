@@ -1,0 +1,69 @@
+- name: Debug OS Family
+  ansible.builtin.debug:
+    var: ansible_facts['os_family']
+
+- name: Debug distro
+  ansible.builtin.debug:
+    var: ansible_facts['distribution']
+
+- name: Set platform/version specific variables
+  ansible.builtin.include_vars: "{{ rolename_vars_file }}"
+  loop:
+    - "{{ ansible_facts['os_family'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_major_version'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}_{{ ansible_facts['distribution_version'] }}.yml"
+  vars:
+    rolename_vars_file: "{{ role_path }}/vars/{{ item }}"
+  when: rolename_vars_file is file
+
+- name: Identify a Free Disk with no partitions
+  ansible.builtin.set_fact:
+    free_disk: "{{ item['key'] }}"
+  with_items:
+    - "{{ ansible_devices | dict2items }}"
+  when:
+    - item['value']['model'] == "Amazon Elastic Block Store"
+    - item['value']['holders'] | length == 0
+    - item['value']['partitions'] | length == 0
+    - item['value']['links']['masters'] | length == 0
+
+- name: Install LVM2
+  ansible.builtin.package:
+    name: lvm2
+    state: present
+
+- name: Create Volume Group
+  community.general.lvg:
+    vg: disk2vg
+    pvs: "/dev/{{ free_disk }}"
+
+- name: Create lvol
+  community.general.lvol:
+    vg: disk2vg
+    lv: "{{ item.value.lv }}"
+    size: "{{ item.value.size }}"
+  loop: "{{ lookup('dict', directories) }}"
+
+- name: Create filesystem
+  community.general.filesystem:
+    fstype: xfs
+    dev: "/dev/disk2vg/{{ item.value.lv }}"
+  loop: "{{ lookup('dict', directories) }}"
+
+# If certain services are not stopped, there will still be a file lock when you try to move or delete the old directories
+- name: Stop Services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop: "{{ services }}"
+
+- name: Stop auditd
+  ansible.builtin.command:
+    cmd: service auditd stop
+  when: ansible_facts['distribution'] == 'RedHat' or ansible_facts['distribution'] == 'Amazon'
+  changed_when: true
+
+- name: Migrate and Mount disk
+  ansible.builtin.include_tasks: mount_and_migrate_disks.yml
+  loop: "{{ lookup('dict', directories) }}"

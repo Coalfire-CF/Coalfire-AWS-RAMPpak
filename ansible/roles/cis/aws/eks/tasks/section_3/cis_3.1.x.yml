@@ -1,0 +1,18 @@
+---
+- name: |
+    3.1.1 | PATCH | Ensure that the kubeconfig file permissions are set to 644 or more restrictive
+    3.1.2 | PATCH | Ensure that the kubelet kubeconfig file ownership is set to root:root
+  ansible.builtin.file:
+    path: /var/lib/kubelet/kubeconfig
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: |
+    3.1.3 | PATCH | Ensure that the kubelet configuration file has permissions set to 644 or more restrictive
+    3.1.4 | PATCH | Ensure that the kubelet configuration file ownership is set to root:root
+  ansible.builtin.file:
+    path: /etc/kubernetes/kubelet/kubelet-config.json
+    owner: root
+    group: root
+    mode: "0644"

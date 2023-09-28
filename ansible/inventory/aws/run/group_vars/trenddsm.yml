@@ -1,0 +1,3 @@
+rhel_08_010330: false # Coalfire Edit: Trend DSM not permitted to modify ds_agent.service file
+rhel_08_010340: false # Coalfire Edit: Trend DSM not permitted to modify ds_agent.service file
+rhel_08_010350: false # Coalfire Edit: Trend DSM not permitted to modify ds_agent.service file

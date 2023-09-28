@@ -1,0 +1,103 @@
+---
+- name: Get docker service path
+  ansible.builtin.shell:
+    cmd: systemctl show -p FragmentPath docker.service | cut -d"=" -f2
+  register: docker_service_path
+
+- name: Debug docker_service_path
+  debug:
+    var: docker_service_path
+
+- name: |
+    3.1 Ensure that the docker.service file ownership is set to root:root
+    3.2 Ensure that docker.service file permissions are appropriately set
+  ansible.builtin.file:
+    path: "{{ docker_service_path.stdout }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Get docker socket path
+  ansible.builtin.shell:
+    cmd: systemctl show -p FragmentPath docker.socket | cut -d"=" -f2
+  register: docker_socket_path
+
+- name: Debug docker_socket_path
+  debug:
+    var: docker_socket_path
+
+- name: |
+    3.3 Ensure that docker.socket file ownership is set to root:root
+    3.4 Ensure that docker.socket file permissions are set to 644 or more restrictive
+  ansible.builtin.file:
+    path: "{{ docker_socket_path.stdout }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: |
+    3.5 Ensure that the /etc/docker directory ownership is set to root:root
+    3.6 Ensure that /etc/docker directory permissions are set to 755 or more restrictively
+  ansible.builtin.file:
+    path: /etc/docker
+    owner: root
+    group: root
+    recurse: true
+    mode: "0755"
+
+- name: |
+    3.7 Ensure that registry certificate file ownership is set to root:root
+    3.8 Ensure that registry certificate file permissions are set to 444 or more restrictively
+  ansible.builtin.file:
+    path: /etc/docker/certs.d
+    owner: root
+    group: root
+    recurse: true
+    mode: "0444"
+
+- name: |
+    3.15 Ensure that the Docker socket file ownership is set to root:docker
+    3.16 Ensure that the Docker socket file permissions are set to 660 or more restrictively
+  ansible.builtin.file:
+    path: /var/run/docker.sock
+    owner: root
+    group: docker
+    mode: "0660"
+
+- name: |
+    3.17 Ensure that the daemon.json file ownership is set to root:root
+    3.18 Ensure that daemon.json file permissions are set to 644 or more restrictive
+  ansible.builtin.file:
+    path: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: |
+    3.19 Ensure that the /etc/default/docker file ownership is set to root:root
+    3.20 Ensure that the /etc/default/docker file permissions are set to 644 or more restrictively
+  ansible.builtin.file:
+    path: /etc/default/docker
+    owner: root
+    group: root
+    mode: "0644"
+  ignore_errors: true # Note: Adding this because the file may not exist
+
+- name: |
+    3.21 Ensure that the /etc/sysconfig/docker file permissions are set to 644 or more restrictively
+    3.22 Ensure that the /etc/sysconfig/docker file ownership is set to root:root
+  ansible.builtin.file:
+    path: /etc/sysconfig/docker
+    owner: root
+    group: root
+    mode: "0644"
+  ignore_errors: true # Note: Adding this because the file may not exist
+
+- name: |
+    3.23 Ensure that the Containerd socket file ownership is set to root:root
+    3.24 Ensure that the Containerd socket file permissions are set to 660 or more restrictively
+  ansible.builtin.file:
+    path: /run/containerd/containerd.sock
+    owner: root
+    group: root
+    mode: "0660"

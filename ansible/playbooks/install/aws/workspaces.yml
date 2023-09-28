@@ -1,0 +1,16 @@
+---
+
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: dc1
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+    ssm_parameter_store_key_id: "{{ lookup('amazon.aws.aws_ssm', '/production/ssm_parameter_store_key_id', endpoint=hostvars['ansible']['ssm_endpoint']) }}"
+  roles:
+    - primary_domain_controller

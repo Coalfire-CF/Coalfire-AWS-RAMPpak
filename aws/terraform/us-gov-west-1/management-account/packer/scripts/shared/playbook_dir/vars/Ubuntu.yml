@@ -1,0 +1,2 @@
+root_ca_store: /usr/local/share/ca-certificates/cacert.crt
+update_ca_handler: ubuntu update ca trust

@@ -1,0 +1,3093 @@
+---
+
+- name: "MEDIUM | UBTU-20-010000 | AUDIT | The Ubuntu operating system must provision temporary user accounts with an expiration time of 72 hours or less."
+  block:
+      - name: "MEDIUM | UBTU-20-010000 | PATCH | The Ubuntu operating system must provision temporary user accounts with an expiration time of 72 hours or less. | Set Accounts To 72 Hour Terminate."
+        shell: chage -E $(date -d "+3 days" +%F) {{ item }}
+        become: true
+        changed_when: false
+        failed_when: false
+        with_items: "{{ ubtu20_temp_account }}"
+        register: ubtu20_01000_temp_account_exp_change_results
+        when: ubtu20_temp_account != "none"
+
+      - name: "MEDIUM | UBTU-20-010000 | AUDIT | The Ubuntu operating system must provision temporary user accounts with an expiration time of 72 hours or less. | Warning For Bad Account."
+        debug:
+            msg:
+                - "Warning!! The account you are trying to set a expiration on is not a valid account on this system."
+                - "Please verify the account using the list below."
+        when:
+            - ubtu20_temp_account != "none"
+            - ubtu20_temp_account not in ubtu20stig_passwd | map(attribute='id') | list
+
+      - name: "MEDIUM | UBTU-20-010000 | AUDIT | The Ubuntu operating system must provision temporary user accounts with an expiration time of 72 hours or less. | Message out warning"
+        debug:
+            msg:
+                - "Warning!! Below are the system accounts. If any where temporary accounts please make"
+                - "sure they are removed or disabled after the crisis is resolved or within 72 hours"
+                - "Accounts with UID less then 100 Listed below."
+                - "{{ ubtu20stig_passwd | selectattr('uid', '<', 100) | map(attribute='id') | list }}"
+                - "Accounts with UID more then 100 Listed below."
+                - "{{ ubtu20stig_passwd | selectattr('uid', '>', 100) | map(attribute='id') | list }}"
+        when:
+            - ubtu20_temp_account == "none" or
+              ubtu20_temp_account != "none"
+            - ubtu20_temp_account not in ubtu20stig_passwd | map(attribute='id') | list
+
+      - name: "MEDIUM | UBTU-20-010000 | AUDIT | The Ubuntu operating system must provision temporary user accounts with an expiration time of 72 hours or less. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010000'
+        when:
+            - ubtu20_temp_account == "none" or
+              ubtu20_temp_account != "none"
+            - ubtu20_temp_account not in ubtu20stig_passwd | map(attribute='id') | list
+  when:
+      - ubtu_20_010000
+  tags:
+      - UBTU-20-010000
+      - CAT2
+      - CCI-000016
+      - SRG-OS-000002-GPOS-00002
+      - SV-238196r653763_rule
+      - V-238196
+      - accounts
+
+- name: |
+    "MEDIUM | UBTU-20-010002 | PATCH | The Ubuntu operating system must enable the graphical user logon banner to display the Standard Mandatory DoD Notice and Consent Banner before granting local access to the system via a graphical user logon. | Set banner settings"
+    "MEDIUM | UBTU-20-010003 | PATCH | The Ubuntu operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting local access to the system via a graphical user logon."
+  lineinfile:
+      path: /etc/gdm3/greeter.dconf-defaults
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      insertafter: "{{ item.insertafter }}"
+      create: true
+      owner: root
+      group: root
+      mode: 0644
+  changed_when: false
+  failed_when: false
+  notify:
+      - dconf update
+      - reload gdm
+  with_items:
+      - { regexp: '\[org\/gnome\/login-screen\]', line: '[org/gnome/login-screen]', insertafter: EOF }
+      - { regexp: 'banner-message-enable', line: 'banner-message-enable=true', insertafter: '\[org\/gnome\/login-screen\]'}
+      - { regexp: 'banner-message-text', line: 'banner-message-text={{ ubtu20stig_warning_banner }}', insertafter: 'banner-message-enable' }
+  loop_control:
+      label: "{{ item.regexp }}"
+  when:
+      - ubtu_20_010002 or ubtu_20_010003
+      - ubtu20stig_desktop_required
+  tags:
+      - UBTU-20-010002
+      - UBTU-20-010003
+      - CAT2
+      - CCI-000048
+      - SRG-OS-000023-GPOS-00006
+      - SV-238197r653766_rule
+      - SV-238198r653769_rule
+      - V-238197
+      - V-238198
+      - banner
+
+- name: "MEDIUM | UBTU-20-010004 | PATCH |  The Ubuntu operating system must retain a user's session lock until that user reestablishes access using established identification and authentication procedures."
+  block:
+      - name: "MEDIUM | UBTU-20-010004 | PATCH |  The Ubuntu operating system must retain a user's session lock until that user reestablishes access using established identification and authentication procedures. | Get screensaver lock status"
+        shell: gsettings get org.gnome.desktop.screensaver lock-enabled
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010004_screen_saver_lock
+
+      - name: "MEDIUM | UBTU-20-010004 | PATCH |  The Ubuntu operating system must retain a user's session lock until that user reestablishes access using established identification and authentication procedures. | Set screensaver lock"
+        shell: gsettings set org.gnome.desktop.screensaver lock-enabled true
+        changed_when: true
+        when: "'true' not in ubtu_20_010004_screen_saver_lock.stdout"
+  when:
+      - ubtu_20_010004
+      - ubtu20stig_desktop_required
+  tags:
+      - UBTU-20-010004
+      - CAT2
+      - CCI-000056
+      - CCI-000057
+      - SRG-OS-000028-GPOS-00009
+      - SV-238199r653772_rule
+      - V-238199
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010005 | PATCH | The Ubuntu operating system must allow users to directly initiate a session lock for all connection types."
+  package:
+      name: vlock
+      state: present
+  when:
+      - ubtu_20_010005
+      - "'vlock' not in ansible_facts.packages"
+  tags:
+      - UBTU-20-010005
+      - CAT2
+      - CCI-000058
+      - CCI-000060
+      - SRG-OS-000030-GPOS-00011
+      - SV-238200r653775_rule
+      - V-238200
+      - user
+
+- name: "MEDIUM | UBTU-20-010010 | AUDIT | The Ubuntu operating system must uniquely identify interactive users."
+  block:
+      - name: "MEDIUM | UBTU-20-010010 | AUDIT | The Ubuntu operating system must uniquely identify interactive users. | Get duplicate UID users"
+        shell: "awk -F \":\" 'list[$3]++{print $1, $3}' /etc/passwd"
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010010_duplicate_uid_users
+
+      - name: "MEDIUM | UBTU-20-010010 | AUDIT | The Ubuntu operating system must uniquely identify interactive users. | Message about duplicate UID users"
+        debug:
+            msg:
+                - "Warning!! You have users with duplicate UID's"
+                - "Please resolve to make all users have unique UID's"
+                - "{{ ubtu_20_010010_duplicate_uid_users.stdout_lines }}"
+        when: ubtu_20_010010_duplicate_uid_users.stdout | length > 0
+
+      - name: "MEDIUM | UBTU-20-010010 | AUDIT | The Ubuntu operating system must uniquely identify interactive users. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010010'
+        when: ubtu_20_010010_duplicate_uid_users.stdout | length > 0
+  when:
+      - ubtu_20_010010
+  tags:
+      - UBTU-20-010010
+      - CAT2
+      - CCI-000764
+      - CCI-000804
+      - SRG-OS-000104-GPOS-00051
+      - SV-238205r653790_rule
+      - V-238205
+      - users
+
+- name: "MEDIUM | UBTU-20-010013 | PATCH | The Ubuntu operating system must automatically terminate a user session after inactivity timeouts have expired."
+  blockinfile:
+      path: /etc/profile.d/99-terminal_tmout.sh
+      create: true
+      mode: 0644
+      state: present
+      marker: "# {mark} ANSIBLE MANAGED"
+      block: |
+          # Set user session timeout - STIG ID UBTU-20-010013
+          TMOUT={{ ubtu20stig_user_session_timeout }}
+          readonly TMOUT
+          export TMOUT
+  when:
+      - ubtu_20_010013
+  tags:
+      - UBTU-20-010013
+      - CAT2
+      - CCI-002361
+      - SRG-OS-000279-GPOS-00109
+      - SV-238207r853404_rule
+      - V-238207
+      - user
+
+- name: "MEDIUM | UBTU-20-010014 | PATCH | The Ubuntu operating system must require users to reauthenticate for privilege escalation or when changing roles."
+  block:
+      - name: "MEDIUM | UBTU-20-010014 | PATCH | The Ubuntu operating system must require users to reauthenticate for privilege escalation or when changing roles. | Get sudoers nopasswd files"
+        shell: grep -Ei '(nopasswd)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010014_sudoers_nopasswd_status
+
+      - name: "MEDIUM | UBTU-20-010014 | PATCH | The Ubuntu operating system must require users to reauthenticate for privilege escalation or when changing roles. | Get sudoers authenticate files"
+        shell: grep -Ei '(!authenticate)' /etc/sudoers /etc/sudoers.d/* | cut -d':' -f1
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010014_sudoers_authenticate_status
+
+      - name: "MEDIUM | UBTU-20-010014 | PATCH | The Ubuntu operating system must require users to reauthenticate for privilege escalation or when changing roles. | Replace NOPASSWD Finds."
+        replace:
+            path: "{{ item }}"
+            regexp: '^([^#|{% if system_is_ec2 %}ec2-user{% endif %}].*)NOPASSWD(.*)'
+            replace: '\1PASSWD\2'
+        with_items:
+            - "{{ ubtu_20_010014_sudoers_nopasswd_status.stdout_lines }}"
+        when: ubtu_20_010014_sudoers_nopasswd_status.stdout | length >= 1
+
+      - name: "MEDIUM | UBTU-20-010014 | PATCH | The Ubuntu operating system must require users to reauthenticate for privilege escalation or when changing roles. | Replace authenticate Finds."
+        replace:
+            path: "{{ item }}"
+            regexp: '^([^#].*)!authenticate(.*)'
+            replace: '\1authenticate\2'
+        with_items:
+            - "{{ ubtu_20_010014_sudoers_authenticate_status.stdout_lines }}"
+        when: ubtu_20_010014_sudoers_authenticate_status.stdout | length >= 1
+  when:
+      - ubtu_20_010014
+  tags:
+      - UBTU-20-010014
+      - CAT2
+      - CCI-002038
+      - SRG-OS-000373-GPOS-00156
+      - SV-238208r853405_rule
+      - V-238208
+      - sudo
+
+- name: "MEDIUM | UBTU-20-010016 | PATCH | The Ubuntu operating system default filesystem permissions must be defined in such a way that all authenticated users can read and modify only their own files."
+  lineinfile:
+      path: /etc/login.defs
+      regexp: '^UMASK.*'
+      line: "UMASK           077"
+  when:
+      - ubtu_20_010016
+  tags:
+      - UBTU-20-010016
+      - CAT2
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00228
+      - SV-238209r653802_rule
+      - V-238209
+      - logins
+
+- name: "MEDIUM | UBTU-20-010033 | PATCH | The Ubuntu operating system must implement smart card logins for multifactor authentication for local and network access to privileged and non-privileged accounts."
+  block:
+      - name: "MEDIUM | UBTU-20-010033 | PATCH | The Ubuntu operating system must implement smart card logins for multifactor authentication for local and network access to privileged and non-privileged accounts. | Get pkcs11 pamd status"
+        shell: grep '^auth.*{{ ubtu20stig_pkcs11.new_control }}.*pam_pkcs11.so' /etc/pam.d/common-auth
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010033_pam_pkcs11_status
+
+      - name: "MEDIUM | UBTU-20-010033 | PATCH | The Ubuntu operating system must implement smart card logins for multifactor authentication for local and network access to privileged and non-privileged accounts. | Set pkcs11 if doesn't exist"
+        pamd:
+            name: common-auth
+            type: "{{ ubtu20stig_pkcs11.type }}"
+            control: "{{ ubtu20stig_pkcs11.control }}"
+            module_path: "{{ ubtu20stig_pkcs11.module_path }}"
+            new_type: auth
+            new_control: "{{ ubtu20stig_pkcs11.new_control }}"
+            new_module_path: pam_pkcs11.so
+            state: "{{ ubtu20stig_pkcs11.state }}"
+        when: ubtu_20_010033_pam_pkcs11_status.stdout | length == 0
+
+      - name: "MEDIUM | UBTU-20-010033 | PATCH | The Ubuntu operating system must implement smart card logins for multifactor authentication for local and network access to privileged and non-privileged accounts. | Adjust PublicKeyAuth In ssh_config."
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?\s*PubkeyAuthentication'
+            line: "PubkeyAuthentication yes"
+        notify: restart sshd
+  when:
+      - ubtu_20_010033
+  tags:
+      - UBTU-20-010033
+      - CAT2
+      - CCI-000765
+      - CCI-000766
+      - CCI-000767
+      - CCI-000768
+      - SRG-OS-000105-GPOS-00052
+      - SV-238210r858517_rule
+      - V-238210
+      - pamd
+      - certificates
+
+- name: "MEDIUM | UBTU-20-010035 | PATCH | The Ubuntu operating system must use strong authenticators in establishing nonlocal maintenance and diagnostic sessions."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#?\s*UsePAM'
+      line: "UsePAM yes"
+  notify: restart sshd
+  when:
+      - ubtu_20_010035
+  tags:
+      - UBTU-20-010035
+      - CAT2
+      - CCI-000877
+      - SRG-OS-000125-GPOS-00065
+      - SV-238211r877395_rule
+      - V-238211
+      - sshd
+
+- name: "MEDIUM | UBTU-20-010036 | PATCH | The Ubuntu operating system must immediately terminate all network connections associated with SSH traffic after a period of inactivity."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#?\s*ClientAliveCountMax'
+      line: "ClientAliveCountMax 1"
+  notify: restart sshd
+  when:
+      - ubtu_20_010036
+  tags:
+      - UBTU-20-010036
+      - CAT2
+      - CCI-000879
+      - SRG-OS-000126-GPOS-00066
+      - SV-238212r858521_rule
+      - V-238212
+      - sshd
+
+- name: "MEDIUM | UBTU-20-010037 | PATCH | The Ubuntu operating system must automatically terminate all network connections associated with SSH traffic at the end of the session or after 10 minutes of inactivity."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#?\s*ClientAliveInterval'
+      line: "ClientAliveInterval {{ ubtu20stig_sshd.client_alive_interval }}"
+  notify: restart sshd
+  when:
+      - ubtu_20_010037
+  tags:
+      - UBTU-20-010037
+      - CAT2
+      - CCI-001133
+      - SRG-OS-000163-GPOS-00072
+      - SV-238213r858523_rule
+      - V-238213
+      - sshd
+
+- name: "MEDIUM | UBTU-20-010038 | PATCH | The Ubuntu operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting any local or remote connection to the system."
+  block:
+      - name: "MEDIUM | UBTU-20-010038 | PATCH | The Ubuntu operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting any local or remote connection to the system. | Uncomment banner keyword and set banner path"
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '(?i)^#?Banner'
+            line: Banner /etc/issue.net
+        when:
+            - ubtu20stig_ssh_required
+
+      - name: "MEDIUM | UBTU-20-010038 | PATCH | The Ubuntu operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting any local or remote connection to the system. | Set banner message"
+        copy:
+            dest: "{{ item }}"
+            content: "{{ ubtu20stig_warning_banner }}"
+            owner: root
+            group: root
+            mode: '0644'
+        notify: restart sshd
+        with_items:
+            - /etc/issue.net
+
+      - name: "MEDIUM | UBTU-20-010038 | PATCH | The Ubuntu operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting any local or remote connection to the system. | Comment Out Default MOTD Info Out."
+        lineinfile:
+            path: /etc/pam.d/sshd
+            regexp: "{{ item.regexp }}"
+            line: "{{ item.line }}"
+        notify: restart sshd
+        with_items:
+            - { regexp: '.*session.*optional.*pam_motd.so.*motd.*', line: '# session    optional     pam_motd.so  motd=/run/motd.dynamic' }
+            - { regexp: '.*session.*optional.*pam_motd.so.*noupdate', line: '# session    optional     pam_motd.so noupdate' }
+
+      - name: "MEDIUM | UBTU-20-010038 | PATCH | The Ubuntu operating system must display the Standard Mandatory DoD Notice and Consent Banner before granting any local or remote connection to the system. | Comment Out And Set To Off PrintLastLog."
+        lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?\s*PrintLastLog'
+            line: "#PrintLastLog no"
+        notify: restart sshd
+  when:
+      - ubtu_20_010038
+      - ubtu20stig_ssh_required
+  tags:
+      - UBTU-20-010038
+      - CAT2
+      - CCI-000048
+      - CCI-001384
+      - CCI-001385
+      - CCI-001386
+      - CCI-001387
+      - CCI-001388
+      - SRG-OS-000228-GPOS-00088
+      - SV-238214r858525_rule
+      - V-238214
+      - banner
+
+- name: "MEDIUM | UBTU-20-010043 | PATCH | The Ubuntu operating system configure the SSH daemon to use Message Authentication Codes (MACs) employing FIPS 140-2 approved cryptographic hashes to prevent the unauthorized disclosure of information and/or detect changes to information during transmission."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regex: '^MACs '
+      line: "MACs {{ ubtu20stig_sshd.macs }}"
+      insertbefore: '^# Ciphers and keying'
+  notify: restart sshd
+  when:
+      - ubtu_20_010043
+  tags:
+      - UBTU-20-010043
+      - CAT2
+      - CCI-001453
+      - CCI-002421
+      - CCI-002890
+      - SRG-OS-000424-GPOS-00188
+      - SV-238216r877465_rule
+      - V-238216
+      - sshd
+
+- name: "MEDIUM | UBTU-20-010044 | PATCH | The Ubuntu operating system must configure the SSH daemon to use FIPS 140-2 approved ciphers to prevent the unauthorized disclosure of information and/or detect changes to information during transmission."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#?\s*Ciphers'
+      line: "Ciphers {{ ubtu20stig_sshd.ciphers }}"
+      insertbefore: '^# Ciphers and keying'
+  notify: restart sshd
+  when:
+      - ubtu_20_010044
+  tags:
+      - UBTU-20-010044
+      - CAT2
+      - CCI-000068
+      - CCI-002421
+      - CCI-003123
+      - SRG-OS-000424-GPOS-00188
+      - SV-238217r877465_rule
+      - V-238217
+      - sshd
+      - encryption
+
+- name: "MEDIUM | UBTU-20-010049 | PATCH | The Ubuntu operating system SSH daemon must prevent remote hosts from connecting to the proxy display."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#?\s*X11UseLocalhost'
+      line: "X11UseLocalhost yes"
+  when:
+      - ubtu_20_010049
+  tags:
+      - UBTU-20-010049
+      - CAT2
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00227
+      - SV-238220r858535_rule
+      - V-238220
+      - sshd
+
+# this is out of order due to it installing needed packages for the next couple of tasks
+- name: "MEDIUM | UBTU-20-010057 | PATCH | The Ubuntu operating system must be configured so that when passwords are changed or new passwords are established, pwquality must be used."
+  block:
+      - name: "MEDIUM | UBTU-20-010057 | PATCH | The Ubuntu operating system must be configured so that when passwords are changed or new passwords are established, pwquality must be used. | Find the pamd settings"
+        shell: grep 'password.*requisite.*pam_pwquality.so' /etc/pam.d/common-password
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010057_pam_pwquality_so
+
+      - name: "MEDIUM | UBTU-20-010057 | PATCH | The Ubuntu operating system must be configured so that when passwords are changed or new passwords are established, pwquality must be used. | Add retry setting if exists"
+        pamd:
+            name: common-password
+            type: password
+            control: requisite
+            module_path: pam_pwquality.so
+            module_arguments: "retry={{ ubtu20stig_pam_pwquality_retry }}"
+            state: args_present
+        when: ubtu_20_010057_pam_pwquality_so.stdout | length > 0
+
+      - name: "MEDIUM | UBTU-20-010057 | PATCH | The Ubuntu operating system must be configured so that when passwords are changed or new passwords are established, pwquality must be used. | Add retry setting if doesn't exists"
+        pamd:
+            name: common-password
+            type: "{{ ubtu20stig_pamd_retry.type }}"
+            control: "{{ ubtu20stig_pamd_retry.control }}"
+            module_path: "{{ ubtu20stig_pamd_retry.module_path }}"
+            new_type: password
+            new_control: requisite
+            new_module_path: pam_pwquality.so
+            module_arguments: "retry={{ ubtu20stig_pam_pwquality_retry }}"
+            state: "{{ ubtu20stig_pamd_retry.state }}"
+        when: ubtu_20_010057_pam_pwquality_so.stdout | length == 0
+
+      - name: "MEDIUM | UBTU-20-010057 | PATCH | The Ubuntu operating system must be configured so that when passwords are changed or new passwords are established, pwquality must be used. | Install libpam-pwquality"
+        package:
+            name: libpam-pwquality
+            state: present
+        when: "'libpam-pwquality' not in ansible_facts.packages"
+
+      - name: "MEDIUM | UBTU-20-010057 | PATCH | The Ubuntu operating system must be configured so that when passwords are changed or new passwords are established, pwquality must be used. | Set the enforcing setting"
+        lineinfile:
+            path: /etc/security/pwquality.conf
+            regexp: '^#?\s*enforcing'
+            line: 'enforcing = 1'
+  when:
+      - ubtu_20_010057
+  tags:
+      - UBTU-20-010057
+      - CAT2
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00225
+      - SV-238228r653859_rule
+      - V-238228
+      - pamd
+      - pwquality
+      - login
+
+- name: "MEDIUM | UBTU-20-010054 | PATCH | The Ubuntu operating system must enforce a minimum 15-character password length."
+  lineinfile:
+      path: /etc/security/pwquality.conf
+      regexp: '^#?\s*minlen'
+      line: "minlen = {{ ubtu20stig_password_complexity.minlen }}"
+      create: true
+      owner: root
+      group: root
+      mode: 0644
+  when:
+      - ubtu_20_010054
+  tags:
+      - UBTU-20-010054
+      - CAT2
+      - CCI-000205
+      - SRG-OS-000078-GPOS-00046
+      - SV-238225r832942_rule
+      - V-238225
+      - accounts
+
+- name: "MEDIUM | UBTU-20-010056 | PATCH | The Ubuntu operating system must prevent the use of dictionary words for passwords."
+  lineinfile:
+      path: /etc/security/pwquality.conf
+      regexp: '^#?\s*dictcheck'
+      line: 'dictcheck = {{ ubtu20stig_password_complexity.dictcheck }}'
+      create: true
+      owner: root
+      group: root
+      mode: 0644
+  when:
+      - ubtu_20_010056
+  tags:
+      - UBTU-20-010056
+      - CAT2
+      - CCI-000366
+      - SRG-OS-000480-GPOS-00225
+      - SV-238227r653856_rule
+      - V-238227
+      - passwords
+
+# this is out of order due to it installing needed packages for the next couple of tasks
+- name: "MEDIUM | UBTU-20-010063 | PATCH | The Ubuntu operating system must implement multifactor authentication for remote access to privileged accounts in such a way that one of the factors is provided by a device separate from the system gaining access."
+  package:
+      name: libpam-pkcs11
+      state: present
+  when:
+      - ubtu_20_010063
+      - "'libpam-pkcs11' not in ansible_facts.packages"
+  tags:
+      - UBTU-20-010063
+      - CAT2
+      - CCI-001948
+      - SRG-OS-000375-GPOS-00160
+      - SV-238230r853410_rule
+      - V-238230
+      - pamd
+      - pkcs11
+
+# this is out of order due to it installing needed packages for the next couple of tasks
+- name: "MEDIUM | UBTU-20-010064 | PATCH | The Ubuntu operating system must accept Personal Identity Verification (PIV) credentials."
+  package:
+      name: opensc-pkcs11
+      state: present
+  when:
+      - ubtu_20_010064
+      - "'opensc-pkcs11' not in ansible_facts.packages"
+  tags:
+      - UBTU-20-010064
+      - CAT2
+      - CCI-001953
+      - SRG-OS-000376-GPOS-00161
+      - SV-238231r853411_rule
+      - V-238231
+      - certificates
+
+- name: "MEDIUM | UBTU-20-010060 | AUDIT | The Ubuntu operating system, for PKI-based authentication, must validate certificates by constructing a certification path (which includes status information) to an accepted trust anchor."
+  block:
+      - name: "MEDIUM | UBTU-20-010060 | AUDIT | The Ubuntu operating system, for PKI-based authentication, must validate certificates by constructing a certification path (which includes status information) to an accepted trust anchor. | Find Section for Default Pkcs11 Module."
+        shell: grep -ozP 'pkcs11_module default([\S\s]*?)}' {{ pam_pkcs11_location.stdout }}
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010060_default_pkcs11_module_output
+
+      - name: "MEDIUM | UBTU-20-010060 | AUDIT | The Ubuntu operating system, for PKI-based authentication, must validate certificates by constructing a certification path (which includes status information) to an accepted trust anchor. | Set_fact"
+        set_fact:
+            ubtu_20_010060_default_pkcs11_module_line: "{{ ubtu_20_010060_default_pkcs11_module_output.stdout | regex_search('.*cert_policy.*') | string }}"
+
+      - name: "MEDIUM | UBTU-20-010060 | PATCH | The Ubuntu operating system, for PKI-based authentication, must validate certificates by constructing a certification path (which includes status information) to an accepted trust anchor. | Add Ca to line If not present."
+        replace:
+            path: "{{ pam_pkcs11_location.stdout }}"
+            regexp: '^(.*)none(.*)$'
+            replace: '\1ca\2'
+        when: "'none' in ubtu_20_010060_default_pkcs11_module_line"
+
+      - name: "MEDIUM | UBTU-20-010060 | PATCH | The Ubuntu operating system, for PKI-based authentication, must validate certificates by constructing a certification path (which includes status information) to an accepted trust anchor. | Fix Commented out line and add ca."
+        replace:
+            path: "{{ pam_pkcs11_location.stdout }}"
+            regexp: '#?\s*cert_policy.*'
+            replace: '  cert_policy = ca;'
+            after: 'pkcs11_module default {'
+            before: '}'
+        when: "'#' in ubtu_20_010060_default_pkcs11_module_line"
+
+      - name: "MEDIUM | UBTU-20-010060 | PATCH | The Ubuntu operating system, for PKI-based authentication, must validate certificates by constructing a certification path (which includes status information) to an accepted trust anchor. | Line Already Exisits No Ca."
+        replace:
+            path: "{{ pam_pkcs11_location.stdout }}"
+            regexp: '(\s*cert_policy\s*= )(?!.*ca)(.*);'
+            replace: '\1ca,\2;'
+        when: "'ca' not in ubtu_20_010060_default_pkcs11_module_line"
+  when:
+      - ubtu_20_010060
+  tags:
+      - UBTU-20-010060
+      - CAT2
+      - CCI-000185
+      - SRG-OS-000066-GPOS-00034
+      - SV-238229r653862_rule
+      - V-238229
+      - certificates
+
+- name: "MEDIUM | UBTU-20-010065 | PATCH | The Ubuntu operating system must electronically verify Personal Identity Verification (PIV) credentials."
+  replace:
+      path: "{{ pam_pkcs11_location.stdout }}"
+      regexp: '(\s*cert_policy\s*= )(?!.*ocsp_on)(.*);'
+      replace: '\1ocsp_on,\2;'
+  when:
+      - ubtu_20_010065
+  tags:
+      - UBTU-20-010065
+      - CAT2
+      - CCI-001954
+      - SRG-OS-000377-GPOS-00162
+      - SV-238232r853412_rule
+      - V-238232
+      - certificates
+
+- name: "MEDIUM | UBTU-20-010066 | AUDIT | The Ubuntu operating system for PKI-based authentication, must implement a local cache of revocation data in case of the inability to access revocation information via the network."
+  block:
+      - name: "MEDIUM | UBTU-20-010066 | PATCH | The Ubuntu operating system for PKI-based authentication, must implement a local cache of revocation data in case of the inability to access revocation information via the network. | Remove crl_auto when it does not match variable set."
+        replace:
+            path: "{{ pam_pkcs11_location.stdout }}"
+            regexp: '(crl_auto,|crl_auto)'
+            replace: ''
+            after: '# use'
+            before: '# Which'
+        when:
+            - "'crl_offline' in ubtu20stig_crl_setting_cert_policy"
+
+      - name: "MEDIUM | UBTU-20-010066 | PATCH | The Ubuntu operating system for PKI-based authentication, must implement a local cache of revocation data in case of the inability to access revocation information via the network. | Remove crl_offline when it does not match variable set."
+        replace:
+            path: "{{ pam_pkcs11_location.stdout }}"
+            regexp: '(crl_offline,|crl_offline)'
+            replace: ''
+            after: '# use'
+            before: '# Which'
+        when:
+            - "'crl_auto' in ubtu20stig_crl_setting_cert_policy"
+
+      - name: "MEDIUM | UBTU-20-010066 | PATCH | The Ubuntu operating system for PKI-based authentication, must implement a local cache of revocation data in case of the inability to access revocation information via the network. | Update Policy crl_auto."
+        replace:
+            path: "{{ pam_pkcs11_location.stdout }}"
+            regexp: '(\s*cert_policy\s*= )(?!.*crl_auto)(.*);'
+            replace: '\1{{ ubtu20stig_crl_setting_cert_policy }},\2;'
+        when:
+            - "'crl_auto' in ubtu20stig_crl_setting_cert_policy"
+
+      - name: "MEDIUM | UBTU-20-010066 | PATCH | The Ubuntu operating system for PKI-based authentication, must implement a local cache of revocation data in case of the inability to access revocation information via the network. | Update Policy crl_offline."
+        replace:
+            path: "{{ pam_pkcs11_location.stdout }}"
+            regexp: '(\s*cert_policy\s*= )(?!.*crl_offline)(.*);'
+            replace: '\1{{ ubtu20stig_crl_setting_cert_policy }},\2;'
+        when:
+            - "'crl_offline' in ubtu20stig_crl_setting_cert_policy"
+  when:
+      - ubtu_20_010066
+  tags:
+      - UBTU-20-010066
+      - CAT2
+      - CCI-001991
+      - SRG-OS-000384-GPOS-00167
+      - SV-238233r880870_rule
+      - V-238233
+      - certificates
+
+- name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one."
+  block:
+      - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Custom Daily SHA1."
+        block:
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Get Current SHA1 On Daily AIDE daily."
+              command: sha1sum /etc/cron.daily/aide
+              changed_when: false
+              failed_when: false
+              register: ubtu20stig_aide_sha1_current_daily
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Set Fact Daily."
+              set_fact:
+                  ubtu20stig_daily_sha1: "{{ ubtu20stig_aide_sha1_current_daily.stdout | regex_replace('(\\s*\/etc.*)','') }}"
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warning AIDE Not Setup Here."
+              debug:
+                  msg:
+                      - "Warning!! There is no AIDE script in the daily cron folder. Please add the script to the monthly"
+                      - "folder to properly complaint with your settings you have choosen as well as STIG standards."
+              when:
+                  - ubtu20stig_aide_sha1_current_daily.stdout | length == 0
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warning SHA1 Custom Does not Match Daily."
+              debug:
+                  msg:
+                      - "Warning!! The following SHA1 value {{ ubtu20stig_custom_sha1_for_aide }} for"
+                      - "your defined daily custom AIDE cron script file does not match the current "
+                      - "system SHA1 value of {{ ubtu20stig_daily_sha1 }}."
+                      - "Please verify the cron AIDE script and make sure it conforms to your site polices."
+                      - "If the system cron AIDE script is correct please update ubtu20stig_custom_sha1_for_aide variable."
+              when:
+                  - ubtu20stig_custom_sha1_for_aide != ubtu20stig_daily_sha1
+                  - ubtu20stig_aide_sha1_current_daily.stdout | length > 0
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warn Count."
+              import_tasks: warning_facts.yml
+              vars:
+                  warn_control_id: 'UBTU-20-010074'
+              when:
+                  - ubtu20stig_custom_sha1_for_aide != ubtu20stig_daily_sha1
+                  - ubtu20stig_aide_sha1_current_daily.stdout | length > 0 or
+                    ubtu20stig_aide_sha1_current_daily.stdout | length == 0
+        when:
+            - "'daily' in ubtu20stig_aide_cron"
+            - "'none' not in ubtu20stig_custom_sha1_for_aide"
+
+      - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Custom Monthly SHA1 Check."
+        block:
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Get Current SHA1 On Daily AIDE monthly."
+              command: sha1sum /etc/cron.monthly/aide
+              changed_when: false
+              failed_when: false
+              register: ubtu20stig_aide_sha1_current_monthly
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Set Fact Monthly."
+              set_fact:
+                  ubtu20stig_monthly_sha1: "{{ ubtu20stig_aide_sha1_current_monthly.stdout | regex_replace('(\\s*\/etc.*)','') }}"
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warning AIDE Not Setup Here."
+              debug:
+                  msg:
+                      - "Warning!! There is no AIDE script in the monthly cron folder. Please add the script to the monthly"
+                      - "folder to properly complaint with your settings you have choosen as well as STIG standards."
+              when:
+                  - ubtu20stig_aide_sha1_current_monthly.stdout | length == 0
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warning SHA1 Custom Does not Match Monthly."
+              debug:
+                  msg:
+                      - "Warning!! The following SHA1 value {{ ubtu20stig_custom_sha1_for_aide }} for"
+                      - "your defined monthly custom AIDE cron script file does not match the current "
+                      - "system SHA1 value of {{ ubtu20stig_monthly_sha1 }}."
+                      - "Please verify the cron AIDE script and make sure it conforms to your site polices."
+                      - "If the system cron AIDE script is correct please update ubtu20stig_custom_sha1_for_aide variable."
+              when:
+                  - ubtu20stig_custom_sha1_for_aide != ubtu20stig_monthly_sha1
+                  - ubtu20stig_aide_sha1_current_monthly.stdout | length > 0
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warn Count."
+              import_tasks: warning_facts.yml
+              vars:
+                  warn_control_id: 'UBTU-20-010074'
+              when:
+                  - ubtu20stig_custom_sha1_for_aide != ubtu20stig_monthly_sha1
+                  - ubtu20stig_aide_sha1_current_monthly.stdout | length > 0 or
+                    ubtu20stig_aide_sha1_current_monthly.stdout | length == 0
+        when:
+            - "'monthly' in ubtu20stig_aide_cron"
+            - "'none' not in ubtu20stig_custom_sha1_for_aide"
+
+      - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | No Custom AIDE Script Default Setup."
+        block:
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Get Current SHA1 On Daily AIDE daily."
+              command: sha1sum /etc/cron.daily/aide
+              changed_when: false
+              failed_when: false
+              register: ubtu20stig_aide_sha1_current_daily
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Set Fact Daily."
+              set_fact:
+                  ubtu20stig_daily_sha1: "{{ ubtu20stig_aide_sha1_current_daily.stdout | regex_replace('(\\s*\/etc.*)','') }}"
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warning AIDE Not Setup Here."
+              debug:
+                  msg:
+                      - "Warning!! There is no AIDE script in the daily cron folder. Please add the script to the daily cron"
+                      - "folder by coping it or reinstalling aide to properly complaint with STIG standards."
+              when:
+                  - ubtu20stig_aide_sha1_current_daily.stdout | length == 0
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warning SHA1 Custom Does not Match Monthly."
+              debug:
+                  msg:
+                      - "Warning!! The following is the SHA1 value {{ ubtu20stig_daily_sha1 }} for"
+                      - "daily AIDE cron script file. Please verify it meets the current default AIDE cron script"
+                      - "sha1 on a fresh install."
+              when:
+                  - "'none' in ubtu20stig_custom_sha1_for_aide"
+                  - ubtu20stig_aide_sha1_current_daily.stdout | length > 0
+
+            - name: "MEDIUM | UBTU-20-010074 | AUDIT | The Ubuntu operating system must be configured so that the script which runs each 30 days or less to check file integrity is the default one. | Warn Count."
+              import_tasks: warning_facts.yml
+              vars:
+                  warn_control_id: 'UBTU-20-010074'
+              when:
+                  - "'none' in ubtu20stig_custom_sha1_for_aide"
+                  - ubtu20stig_aide_sha1_current_daily.stdout | length > 0 or
+                    ubtu20stig_aide_sha1_current_daily.stdout | length == 0
+        when:
+            - "'none' in ubtu20stig_custom_sha1_for_aide"
+  when:
+      - ubtu_20_010074
+  tags:
+      - UBTU-20-010074
+      - CAT2
+      - CCI-002699
+      - SRG-OS-000446-GPOS-00200
+      - SV-238236r853415_rule
+      - V-238236
+      - aide
+
+- name: "MEDIUM | UBTU-20-010100 | PATCH |  The Ubuntu operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/passwd."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010100
+  tags:
+      - UBTU-20-010100
+      - CAT2
+      - CCI-000018
+      - CCI-000172
+      - CCI-001403
+      - CCI-001404
+      - CCI-001405
+      - CCI-002130
+      - SRG-OS-000004-GPOS-00004
+      - SV-238238r853416_rule
+      - V-238238
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010101 | PATCH | The Ubuntu operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/group."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010101
+  tags:
+      - UBTU-20-010101
+      - CAT2
+      - CCI-000018
+      - CCI-000172
+      - CCI-001403
+      - CCI-001404
+      - CCI-001405
+      - CCI-002130
+      - SRG-OS-000004-GPOS-00004
+      - SV-238239r853417_rule
+      - V-238239
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010102 | PATCH | The Ubuntu operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/shadow."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010102
+  tags:
+      - UBTU-20-010102
+      - CAT2
+      - CCI-000018
+      - CCI-000172
+      - CCI-001403
+      - CCI-001404
+      - CCI-001405
+      - CCI-002130
+      - SRG-OS-000004-GPOS-00004
+      - SV-238240r853418_rule
+      - V-238240
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010103 | PATCH | The Ubuntu operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/gshadow."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010103
+  tags:
+      - UBTU-20-010103
+      - CAT2
+      - CCI-000172
+      - CCI-001403
+      - CCI-001404
+      - CCI-001405
+      - CCI-002130
+      - SRG-OS-000004-GPOS-00004
+      - SV-238241r853419_rule
+      - V-238241
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010104 | PATCH | The Ubuntu operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/opasswd."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010104
+  tags:
+      - UBTU-20-010104
+      - CAT2
+      - CCI-000018
+      - CCI-000172
+      - CCI-001403
+      - CCI-001404
+      - CCI-001405
+      - CCI-002130
+      - SRG-OS-000004-GPOS-00004
+      - SV-238242r853420_rule
+      - V-238242
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010117 | PATCH | The Ubuntu operating system must alert the ISSO and SA (at a minimum) in the event of an audit processing failure."
+  lineinfile:
+      path: /etc/audit/auditd.conf
+      regexp: '^action_mail_acct ='
+      line: "action_mail_acct = {{ ubtu20stig_auditd_mail_acct }}"
+  register: ubtu_20_010117_action_mail_acct_result
+  notify: restart auditd
+  failed_when:
+      - ubtu_20_010117_action_mail_acct_result is failed
+      - ubtu_20_010117_action_mail_acct_result.rc != 257
+  when:
+      - ubtu_20_010117
+  tags:
+      - UBTU-20-010117
+      - CAT2
+      - CCI-000139
+      - SRG-OS-000046-GPOS-00022
+      - SV-238243r653904_rule
+      - V-238243
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010118 | PATCH | The Ubuntu operating system must shut down by default upon audit failure (unless availability is an overriding concern)."
+  lineinfile:
+      path: /etc/audit/auditd.conf
+      regexp: '^disk_full_action ='
+      line: "disk_full_action = {{ ubtu20stig_auditd_disk_full_action }}"
+  notify: restart auditd
+  when:
+      - ubtu_20_010118
+  tags:
+      - UBTU-20-010118
+      - CAT2
+      - CCI-000140
+      - SRG-OS-000047-GPOS-00023
+      - SV-238244r653907_rule
+      - V-238244
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010122 | PATCH | The Ubuntu operating system must be configured so that audit log files are not read or write-accessible by unauthorized users."
+  block:
+      - name: "MEDIUM | UBTU-20-010122 | AUDIT | The Ubuntu operating system must be configured so that audit log files are not read or write-accessible by unauthorized users. | Get File Permissions."
+        shell: find {{ ubtu_20_audit_log_path.stdout }} -type f -perm -600 ! -perm 600
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010122_audit_log_files_permissions_audit
+
+      - name: "MEDIUM | UBTU-20-010122 | PATCH | The Ubuntu operating system must be configured so that audit log files are not read or write-accessible by unauthorized users. | Adjust Aduit Log Files If Higher Then 0600."
+        file:
+            path: "{{ item }}"
+            mode: "{{ ubtu20stig_audit_log_files_permissions }}"
+        with_items:
+            - "{{ ubtu_20_010122_audit_log_files_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010122_audit_log_files_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010122
+  tags:
+      - UBTU-20-010122
+      - CAT2
+      - CCI-000162
+      - CCI-000163
+      - SRG-OS-000057-GPOS-00027
+      - SV-238245r653910_rule
+      - V-238245
+      - auditd
+      - logs
+
+- name: |
+    "MEDIUM | UBTU-20-010123 | PATCH | The Ubuntu operating system must be configured to permit only authorized users ownership of the audit log files."
+    "MEDIUM | UBTU-20-010124 | PATCH | The Ubuntu operating system must permit only authorized groups ownership of the audit log files."
+  block:
+      - name: |
+          "MEDIUM | UBTU-20-010123 | AUDIT | The Ubuntu operating system must be configured to permit only authorized users ownership of the audit log files. | Find Files."
+          "MEDIUM | UBTU-20-010124 | AUDIT | The Ubuntu operating system must permit only authorized groups ownership of the audit log files. | Find Files."
+        shell: find {{ ubtu_20_audit_log_path.stdout }} -type f ! -user root -o -type f ! -group root
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010123_audit_log_files_root_permissions_audit
+
+      - name: |
+          "MEDIUM | UBTU-20-010123 | PATCH | The Ubuntu operating system must be configured to permit only authorized users ownership of the audit log files. | Set Permissions."
+          "MEDIUM | UBTU-20-010124 | PATCH | The Ubuntu operating system must permit only authorized groups ownership of the audit log files. | Set Permissions."
+        file:
+            path: "{{ item }}"
+            owner: "{{ ubtu_20_010123 | ternary('root',omit) }}"
+            group: "{{ ubtu_20_010124 | ternary('root',omit) }}"
+        with_items:
+            - "{{ ubtu_20_010123_audit_log_files_root_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010123_audit_log_files_root_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010123 or
+        ubtu_20_010124
+  tags:
+      - UBTU-20-010123
+      - UBTU-20-010124
+      - CAT2
+      - CCI-000162
+      - CCI-000163
+      - SRG-OS-000057-GPOS-00027
+      - SV-238246r653913_rule
+      - SV-238247r832947_rule
+      - V-238246
+      - V-238247
+      - auditd
+      - logs
+
+- name: "MEDIUM | UBTU-20-010128 | PATCH | The Ubuntu operating system must be configured so that the audit log directory is not write-accessible by unauthorized users."
+  block:
+      - name: "MEDIUM | UBTU-20-010128 | AUDIT | The Ubuntu operating system must be configured so that the audit log directory is not write-accessible by unauthorized users. | Find Log directory Permissions."
+        shell: find {{ ubtu_20_audit_log_path.stdout }} -type d -perm -750 ! -perm 750
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010128_audit_log_dir_permissions_audit
+
+      - name: "MEDIUM | UBTU-20-010128 | PATCH | The Ubuntu operating system must be configured so that the audit log directory is not write-accessible by unauthorized users. | Fix Log Directory Permissions."
+        file:
+            path: "{{ ubtu_20_audit_log_path.stdout }}"
+            mode: "{{ ubtu20stig_audit_log_dir_permission }}"
+            state: directory
+        when:
+            - ubtu_20_010128_audit_log_dir_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010128
+  tags:
+      - UBTU-20-010128
+      - CAT2
+      - CCI-000164
+      - SRG-OS-000059-GPOS-00029
+      - SV-238248r653919_rule
+      - V-238248
+      - auditd
+      - logs
+
+- name: "MEDIUM | UBTU-20-010133 | PATCH | The Ubuntu operating system must be configured so that audit configuration files are not write-accessible by unauthorized users."
+  block:
+      - name: "MEDIUM | UBTU-20-010133 | PATCH | The Ubuntu operating system must be configured so that audit configuration files are not write-accessible by unauthorized users. | Create List."
+        shell: find /etc/audit/audit.rules /etc/audit/auditd.conf /etc/audit/rules.d/* -type f -perm -640 ! -perm 640
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010133_audit_config_files_permissions_audit
+
+      - name: "MEDIUM | UBTU-20-010133 | PATCH | The Ubuntu operating system must be configured so that audit configuration files are not write-accessible by unauthorized users. | Set User Write Permissions."
+        file:
+            path: "{{ item }}"
+            mode: "{{ ubtu20stig_audit_file_permissions }}"
+        with_items:
+            - "{{ ubtu_20_010133_audit_config_files_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010133_audit_config_files_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010133
+  tags:
+      - UBTU-20-010133
+      - CAT2
+      - CCI-000171
+      - SRG-OS-000063-GPOS-00032
+      - SV-238249r653922_rule
+      - V-238249
+      - auditd
+
+- name: |
+    "MEDIUM | UBTU-20-010134 | PATCH | The Ubuntu operating system must permit only authorized accounts to own the audit configuration files."
+    "MEDIUM | UBTU-20-010135 | PATCH | The Ubuntu operating system must permit only authorized groups to own the audit configuration files."
+  block:
+      - name: |
+          "MEDIUM | UBTU-20-010134 | PATCH | The Ubuntu operating system must permit only authorized accounts to own the audit configuration files. | Create List."
+          "MEDIUM | UBTU-20-010135 | PATCH | The Ubuntu operating system must permit only authorized groups to own the audit configuration files. | Create List."
+        shell: find /etc/audit/audit.rules /etc/audit/auditd.conf /etc/audit/rules.d/* -type f ! -user root -o -type f ! -group root
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010134_audit_config_files_root_permissions_audit
+
+      - name: |
+          "MEDIUM | UBTU-20-010134 | PATCH | The Ubuntu operating system must permit only authorized accounts to own the audit configuration files. | Set Account Owner."
+          "MEDIUM | UBTU-20-010135 | PATCH | The Ubuntu operating system must permit only authorized groups to own the audit configuration files. | Set Group Owner."
+        file:
+            path: "{{ item }}"
+            owner: "{{ ubtu_20_010134 | ternary('root',omit) }}"
+            group: "{{ ubtu_20_010135 | ternary('root',omit) }}"
+        with_items:
+            - "{{ ubtu_20_010134_audit_config_files_root_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010134_audit_config_files_root_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010134 or
+        ubtu_20_010135
+  tags:
+      - UBTU-20-010134
+      - UBTU-20-010135
+      - CAT2
+      - CCI-000171
+      - SRG-OS-000063-GPOS-00032
+      - SV-238250r653925_rule
+      - SV-238251r653928_rule
+      - V-238250
+      - V-238251
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010136 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the su command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010136
+  tags:
+      - UBTU-20-010136
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238252r653931_rule
+      - V-238252
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010137 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the chfn command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010137
+  tags:
+      - UBTU-20-010137
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238253r653934_rule
+      - V-238253
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010138 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the mount command"
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010138
+  tags:
+      - UBTU-20-010138
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238254r653937_rule
+      - V-238254
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010139 | PATCH |  The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the umount command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010139
+  tags:
+      - UBTU-20-010139
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238255r653940_rule
+      - V-238255
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010140 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the ssh-agent command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010140
+  tags:
+      - UBTU-20-010140
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238256r653943_rule
+      - V-238256
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010141 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the ssh-keysign command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010141
+  tags:
+      - UBTU-20-010141
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238257r653946_rule
+      - V-238257
+      - aduitd
+
+- name: "MEDIUM | UBTU-20-010142 | PATCH | The Ubuntu operating system must generate audit records for any use of the setxattr, fsetxattr, lsetxattr, removexattr, fremovexattr, and lremovexattr system calls."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010142
+  tags:
+      - UBTU-20-010142
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238258r808474_rule
+      - V-238258
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010148 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the chown, fchown, fchownat, and lchown system calls."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010148
+  tags:
+      - UBTU-20-010148
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238264r808477_rule
+      - V-238264
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010152 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the chmod, fchmod, and fchmodat system calls."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010152
+  tags:
+      - UBTU-20-010152
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238268r808480_rule
+      - V-238268
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010155 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the creat, open, openat, open_by_handle_at, truncate, and ftruncate system calls."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010155
+  tags:
+      - UBTU-20-010155
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238271r808483_rule
+      - V-238271
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010161 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the sudo command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010161
+  tags:
+      - UBTU-20-010161
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238277r654006_rule
+      - V-238277
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010162 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the sudoedit command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010162
+  tags:
+      - UBTU-20-010162
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238278r654009_rule
+      - V-238278
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010163 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the chsh command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010163
+  tags:
+      - UBTU-20-010163
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238279r654012_rule
+      - V-238279
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010164 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the newgrp command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010164
+  tags:
+      - UBTU-20-010164
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238280r654015_rule
+      - V-238280
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010165 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the chcon command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010165
+  tags:
+      - UBTU-20-010165
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238281r654018_rule
+      - V-238281
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010166 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the apparmor_parser command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010166
+  tags:
+      - UBTU-20-010166
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238282r654021_rule
+      - V-238282
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010167 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the setfacl command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010167
+  tags:
+      - UBTU-20-010167
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238283r654024_rule
+      - V-238283
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010168 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the chacl command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010168
+  tags:
+      - UBTU-20-010168
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238284r654027_rule
+      - V-238284
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010169 | PATCH | The Ubuntu operating system must generate audit records for the use and modification of the tallylog file."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010169
+  tags:
+      - UBTU-20-010169
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238285r654030_rule
+      - V-238285
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010170 | PATCH | The Ubuntu operating system must generate audit records for the use and modification of faillog file."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc//99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010170
+  tags:
+      - UBTU-20-010170
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238286r654033_rule
+      - V-238286
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010171 | PATCH | The Ubuntu operating system must generate audit records for the use and modification of the lastlog file."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010171
+  tags:
+      - UBTU-20-010171
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238287r654036_rule
+      - V-238287
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010172 | PATCH |  The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the passwd command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010172
+  tags:
+      - UBTU-20-010172
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238288r833012_rule
+      - V-238288
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010173 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the unix_update command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010173
+  tags:
+      - UBTU-20-010173
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238289r654042_rule
+      - V-238289
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010174 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the gpasswd command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010174
+  tags:
+      - UBTU-20-010174
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238290r654045_rule
+      - V-238290
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010175 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the chage command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010175
+  tags:
+      - UBTU-20-010175
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238291r654048_rule
+      - V-238291
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010176 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the usermod command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010176
+  tags:
+      - UBTU-20-010176
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238292r654051_rule
+      - V-238292
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010177 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the crontab command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010177
+  tags:
+      - UBTU-20-010177
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238293r654054_rule
+      - V-238293
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010178 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the pam_timestamp_check command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010178
+  tags:
+      - UBTU-20-010178
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238294r654057_rule
+      - V-238294
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010179 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the init_module and finit_module syscalls."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010179
+  tags:
+      - UBTU-20-010179
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000064-GPOS-00033
+      - SV-238295r808486_rule
+      - V-238295
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010181 | PATCH | The Ubuntu operating system must generate audit records for successful/unsuccessful uses of the delete_module syscall."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010181
+  tags:
+      - UBTU-20-010181
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000477-GPOS-00222
+      - SV-238297r802387_rule
+      - V-238297
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010182 | PATCH | The Ubuntu operating system must produce audit records and reports containing information to establish when, where, what type, the source, and the outcome for all DoD-defined auditable events and actions in near real time."
+  systemd:
+      name: auditd
+      state: started
+      enabled: true
+  when:
+      - ubtu_20_010182
+  tags:
+      - UBTU-20-010182
+      - CAT2
+      - CCI-000130
+      - CCI-000131
+      - CCI-000132
+      - CCI-000133
+      - CCI-000134
+      - CCI-000135
+      - CCI-000154
+      - CCI-000158
+      - CCI-000169
+      - CCI-000172
+      - CCI-001814
+      - CCI-001875
+      - CCI-001876
+      - CCI-001877
+      - CCI-001878
+      - CCI-001879
+      - CCI-001880
+      - CCI-001881
+      - CCI-001882
+      - CCI-001914
+      - SRG-OS-000038-GPOS-00016
+      - SV-238298r853421_rule
+      - V-238298
+      - auditd
+      - services
+
+- name: "MEDIUM | UBTU-20-010198 | PATCH | The Ubuntu operating system must initiate session audits at system startup."
+  block:
+      - name: "MEDIUM | UBTU-20-010198 | AUDIT | The Ubuntu operating system must initiate session audits at system startup. | Get GRUB_CMDLINE_LINUX"
+        shell: grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | cut -f2 -d'"'
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010198_cmdline_settings
+
+      - name: "MEDIUM | UBTU-20-010198 | PATCH | The Ubuntu operating system must initiate session audits at system startup. | Add setting if audit doesn't exist"
+        lineinfile:
+            path: /etc/default/grub
+            regexp: '^GRUB_CMDLINE_LINUX='
+            line: 'GRUB_CMDLINE_LINUX="{{ ubtu_20_010198_cmdline_settings.stdout }} audit=1"'
+        notify: update grub
+        when: "'audit=' not in ubtu_20_010198_cmdline_settings.stdout"
+
+      - name: "MEDIUM | UBTU-20-010198 | PATCH | The Ubuntu operating system must initiate session audits at system startup. | Add setting if audit exists"
+        replace:
+            path: /etc/default/grub
+            regexp: 'audit=([0-9]+)'
+            replace: 'audit=1'
+        notify: update grub
+        when: "'audit=' in ubtu_20_010198_cmdline_settings.stdout"
+  when:
+      - ubtu_20_010198
+  tags:
+      - UBTU-20-010198
+      - CAT2
+      - CCI-001464
+      - SRG-OS-000254-GPOS-00095
+      - SV-238299r654072_rule
+      - V-238299
+      - grub
+
+- name: "MEDIUM | UBTU-20-010199 | PATCH | The Ubuntu operating system must configure audit tools with a mode of 0755 or less permissive."
+  block:
+      - name: "MEDIUM | UBTU-20-010199 | Audit | The Ubuntu operating system must configure audit tools with a mode of 0755 or less permissive. | Obtain Files Not With 755 Or Less."
+        shell: find /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/audispd /sbin/augenrules -type f -perm -755 ! -perm 755
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010199_file_permissions_audit
+
+      - name: "MEDIUM | UBTU-20-010199 | Audit | The Ubuntu operating system must configure audit tools with a mode of 0755 or less permissive. | Adjust Audit Tool If higher then 0755."
+        file:
+            path: "{{ item }}"
+            mode: "{{ ubtu20stig_audit_tool_permissions }}"
+        with_items:
+            - "{{ ubtu_20_010199_file_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010199_file_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010199
+  tags:
+      - UBTU-20-010199
+      - CAT2
+      - CCI-001493
+      - CCI-001494
+      - SRG-OS-000256-GPOS-00097
+      - SV-238300r654075_rule
+      - V-238300
+      - permissions
+
+- name: |
+    "MEDIUM | UBTU-20-010200 | PATCH | The Ubuntu operating system must configure audit tools to be owned by root."
+    "MEDIUM | UBTU-20-010201 | PATCH | The Ubuntu operating system must configure the audit tools to be group-owned by root."
+  block:
+      - name: |
+          "MEDIUM | UBTU-20-010200 | AUDIT | The Ubuntu operating system must configure audit tools to be owned by root. | Find Non-Root Files."
+          "MEDIUM | UBTU-20-010201 | AUDIT | The Ubuntu operating system must configure the audit tools to be group-owned by root. | Find Non-Root Files."
+        shell: find /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/audispd /sbin/augenrules -type f ! -user root -o -type f ! -group root
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010200_root_permissions_audit
+
+      - name: |
+          "MEDIUM | UBTU-20-010200 | PATCH | The Ubuntu operating system must configure audit tools to be owned by root. | Assign Root To File."
+          "MEDIUM | UBTU-20-010201 | PATCH | The Ubuntu operating system must configure the audit tools to be group-owned by root. | Assign Root To File."
+        file:
+            path: "{{ item }}"
+            owner: "{{ ubtu_20_010200 | ternary('root',omit) }}"
+            group: "{{ ubtu_20_010201 | ternary('root',omit) }}"
+        with_items:
+            - "{{ ubtu_20_010200_root_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010200_root_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010200 or
+        ubtu_20_010201
+  tags:
+      - UBTU-20-010200
+      - UBTU-20-010201
+      - CAT2
+      - CCI-001493
+      - CCI-001494
+      - SRG-OS-000256-GPOS-00097
+      - SV-238301r654078_rule
+      - SV-238302r654081_rule
+      - V-238301
+      - V-238302
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010205 | PATCH | The Ubuntu operating system must use cryptographic mechanisms to protect the integrity of audit tools."
+  lineinfile:
+      path: /etc/aide/aide.conf
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }} "
+      owner: root
+      group: root
+      mode: 0600
+  with_items:
+      - { regexp: '# Audit Tools', line: '# Audit Tools'}
+      - { regexp: '/sbin/auditctl', line: '/sbin/auditctl {{ ubtu20stig_cryptographic_mechanisms }}' }
+      - { regexp: '/sbin/auditd', line: '/sbin/auditd {{ ubtu20stig_cryptographic_mechanisms }}' }
+      - { regexp: '/sbin/ausearch', line: '/sbin/ausearch {{ ubtu20stig_cryptographic_mechanisms }}' }
+      - { regexp: '/sbin/aureport', line: '/sbin/aureport {{ ubtu20stig_cryptographic_mechanisms }}' }
+      - { regexp: '/sbin/autrace', line: '/sbin/autrace {{ ubtu20stig_cryptographic_mechanisms }}' }
+      - { regexp: '/sbin/audispd', line: '/sbin/audispd {{ ubtu20stig_cryptographic_mechanisms }}' }
+      - { regexp: '/sbin/augenrules', line: '/sbin/augenrules {{ ubtu20stig_cryptographic_mechanisms }}' }
+  when:
+      - ubtu_20_010205
+  tags:
+      - UBTU-20-010205
+      - CAT2
+      - CCI-001496
+      - SRG-OS-000278-GPOS-00108
+      - SV-238303r877393_rule
+      - V-238303
+      - aide
+
+- name: "MEDIUM | UBTU-20-010211 | PATCH | The Ubuntu operating system must prevent all software from executing at higher privilege levels than users executing the software and the audit system must be configured to audit the execution of privileged functions."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010211
+  tags:
+      - UBTU-20-010211
+      - CAT2
+      - CCI-002233
+      - CCI-002234
+      - SRG-OS-000326-GPOS-00126
+      - SV-238304r853422_rule
+      - V-238304
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010244 | PATCH | The Ubuntu operating system must generate audit records for privileged activities, nonlocal maintenance, diagnostic sessions and other system-level access."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010244
+  tags:
+      - UBTU-20-010244
+      - CAT2
+      - CCI-000172
+      - CCI-002884
+      - SRG-OS-000392-GPOS-00172
+      - SV-238309r853427_rule
+      - V-238309
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010267 | PATCH |  The Ubuntu operating system must generate audit records for any successful/unsuccessful use of unlink, unlinkat, rename, renameat, and rmdir system calls."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010267
+  tags:
+      - UBTU-20-010267
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000468-GPOS-00212
+      - SV-238310r832953_rule
+      - V-238310
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010277 | PATCH |  The Ubuntu operating system must generate audit records for the /var/log/wtmp file."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010277
+  tags:
+      - UBTU-20-010277
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000472-GPOS-00217
+      - SV-238315r654120_rule
+      - V-238315
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010278 | PATCH | The Ubuntu operating system must generate audit records for the /var/run/utmp file."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010278
+  tags:
+      - UBTU-20-010278
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000472-GPOS-00217
+      - SV-238316r880873_rule
+      - V-238316
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010279 | PATCH | The Ubuntu operating system must generate audit records for the /var/log/btmp file."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010279
+  tags:
+      - UBTU-20-010279
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000472-GPOS-00217
+      - SV-238317r654126_rule
+      - V-238317
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010296 | PATCH | The Ubuntu operating system must generate audit records when successful/unsuccessful attempts to use modprobe command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010296
+  tags:
+      - UBTU-20-010296
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000477-GPOS-00222
+      - SV-238318r654129_rule
+      - V-238318
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010297 | PATCH | The Ubuntu operating system must generate audit records when successful/unsuccessful attempts to use the kmod command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010297
+  tags:
+      - UBTU-20-010297
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000477-GPOS-00222
+      - SV-238319r654132_rule
+      - V-238319
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010298 | PATCH | The Ubuntu operating system must generate audit records when successful/unsuccessful attempts to use the fdisk command."
+  debug:
+      msg: "Control being set via Handler 'update auditd' which writes to /etc/audit.d/99_stig_auditd.rules"
+  changed_when: true
+  notify: update auditd
+  when:
+      - ubtu_20_010298
+  tags:
+      - UBTU-20-010298
+      - CAT2
+      - CCI-000172
+      - SRG-OS-000477-GPOS-00222
+      - SV-238320r832956_rule
+      - V-238320
+      - auditd
+
+- name: "MEDIUM | UBTU-20-010403 | PATCH |  The Ubuntu operating system must monitor remote access methods."
+  block:
+      - name: "MEDIUM | UBTU-20-010403 | PATCH | The Ubuntu operating system must monitor remote access methods. | Get existing files"
+        shell: grep -E -r '^(auth,authpriv\.\*|daemon\.\*)' /etc/rsyslog.* | cut -d':' -f1
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010403_existing_files
+
+      - name: "MEDIUM | UBTU-20-010403 | PATCH | The Ubuntu operating system must monitor remote access methods. | Set settings"
+        lineinfile:
+            path: "{{ (ubtu_20_010403_existing_files.stdout | length > 0) | ternary(ubtu_20_010403_existing_files.stdout,'/etc/rsyslog.d/50-default.conf') }}"
+            regexp: "{{ item.regexp }}"
+            line: "{{ item.line }}"
+            create: true
+            mode: 0644
+            owner: root
+            group: root
+        notify: restart rsyslog
+        with_items:
+            - {regexp: '^auth.*,authpriv.*', line: "auth.*,authpriv.*               /var/log/secure"}
+            - {regexp: '^daemon.*|#daemon.*', line: "daemon.*                        /var/log/messages"}
+  when:
+      - ubtu_20_010403
+  tags:
+      - UBTU-20-010403
+      - CAT2
+      - CCI-000067
+      - SRG-OS-000032-GPOS-00013
+      - SV-238324r832959_rule
+      - V-238324
+      - rsyslog
+
+- name: "MEDIUM | UBTU-20-010404 | PATCH | The Ubuntu operating system must encrypt all stored passwords with a FIPS 140-2 approved cryptographic hashing algorithm."
+  block:
+      - name: "MEDIUM | UBTU-20-010404 | AUDIT | The Ubuntu operating system must encrypt all stored passwords with a FIPS 140-2 approved cryptographic hashing algorithm. | Get status of pam_unix.so"
+        shell: grep 'password.*{{ ubtu20stig_pamd_encryption.new_control }}.*pam_unix.so' /etc/pam.d/common-password
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010404_pam_unix_so
+
+      - name: "MEDIUM | UBTU-20-010404 | PATCH | The Ubuntu operating system must encrypt all stored passwords with a FIPS 140-2 approved cryptographic hashing algorithm. | Add encryption if pam_unix exists"
+        pamd:
+            name: common-password
+            type: password
+            control: "{{ ubtu20stig_pamd_encryption.new_control }}"
+            module_path: pam_unix.so
+            module_arguments: "{{ ubtu20stig_pamd_encryption.encryption }}"
+            state: args_present
+        when: ubtu_20_010404_pam_unix_so.stdout | length > 0
+
+      - name: "MEDIUM | UBTU-20-010404 | PATCH | The Ubuntu operating system must encrypt all stored passwords with a FIPS 140-2 approved cryptographic hashing algorithm. | Add encryption if pam_unix doesn't exists"
+        pamd:
+            name: common-password
+            type: "{{ ubtu20stig_pamd_encryption.type }}"
+            control: "{{ ubtu20stig_pamd_encryption.control }}"
+            module_path: "{{ ubtu20stig_pamd_encryption.module_path }}"
+            new_type: password
+            new_control: "{{ ubtu20stig_pamd_encryption.new_control }}"
+            new_module_path: pam_unix.so
+            module_arguments: "{{ ubtu20stig_pamd_encryption.encryption }}"
+            state: "{{ ubtu20stig_pamd_encryption.state }}"
+        when: ubtu_20_010404_pam_unix_so.stdout | length == 0
+
+      - name: "MEDIUM | UBTU-20-010404 | PATCH | The Ubuntu operating system must encrypt all stored passwords with a FIPS 140-2 approved cryptographic hashing algorithm. | Add ENCRYPT_METHOD"
+        lineinfile:
+            path: /etc/login.defs
+            regexp: '^ENCRYPT_METHOD'
+            line: "ENCRYPT_METHOD {{ ubtu20stig_login_defaults.encrypt_method }}"
+  when:
+      - ubtu_20_010404
+  tags:
+      - UBTU-20-010404
+      - CAT2
+      - CCI-000803
+      - SRG-OS-000120-GPOS-00061
+      - SV-238325r654150_rule
+      - V-238325
+      - pamd
+      - encryption
+
+- name: "MEDIUM | UBTU-20-010407 | AUDIT | The Ubuntu operating system must be configured to prohibit or restrict the use of functions, ports, protocols, and/or services, as defined in the PPSM CAL and vulnerability assessments."
+  block:
+      - name: "MEDIUM | UBTU-20-010407 | AUDIT | The Ubuntu operating system must be configured to prohibit or restrict the use of functions, ports, protocols, and/or services, as defined in the PPSM CAL and vulnerability assessments. | Message out warning"
+        debug:
+            msg: "Warning!! Please make sure your UFW allow/deny settings conform to PPSM CAL vulnerability assessments"
+
+      - name: The Ubuntu operating system must be configured to prohibit or restrict the use of functions, ports, protocols, and/or services, as defined in the PPSM CAL and vulnerability assessments. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010407'
+  when:
+      - ubtu_20_010407
+  tags:
+      - UBTU-20-010407
+      - CAT2
+      - CCI-000382
+      - SRG-OS-000096-GPOS-00050
+      - SV-238328r654159_rule
+      - V-238328
+      - firewall
+      - ufw
+
+- name: "MEDIUM | UBTU-20-010408 | PATCH | The Ubuntu operating system must prevent direct login into the root account."
+  user:
+      name: root
+      password_lock: true
+  when:
+      - ubtu_20_010408
+  tags:
+      - UBTU-20-010408
+      - CAT2
+      - CCI-000770
+      - SRG-OS-000109-GPOS-00056
+      - SV-238329r654162_rule
+      - V-238329
+      - accounts
+
+- name: "MEDIUM | UBTU-20-010409 | PATCH | The Ubuntu operating system must disable account identifiers (individuals, groups, roles, and devices) after 35 days of inactivity."
+  block:
+      - name: "MEDIUM | UBTU-20-010409 | AUDIT | The Ubuntu operating system must disable account identifiers (individuals, groups, roles, and devices) after 35 days of inactivity. | Get useradd inactive value"
+        shell: grep '^INACTIVE' /etc/default/useradd | cut -d"=" -f2
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010409_useradd_inactive
+
+      - name: "MEDIUM | UBTU-20-010409 | PATCH | The Ubuntu operating system must disable account identifiers (individuals, groups, roles, and devices) after 35 days of inactivity. | Set INACTIVE"
+        shell: useradd -D -f {{ ubtu20stig_useradd_active }}
+        changed_when: true
+        when:
+            - ubtu_20_010409_useradd_inactive.stdout | length == 0 or
+              ubtu_20_010409_useradd_inactive.stdout == "-1" or
+              ubtu20stig_useradd_active | string not in ubtu_20_010409_useradd_inactive.stdout
+  when:
+      - ubtu_20_010409
+  tags:
+      - UBTU-20-010409
+      - CAT2
+      - CCI-000795
+      - SRG-OS-000118-GPOS-00060
+      - SV-238330r654165_rule
+      - V-238330
+      - logins
+
+- name: "MEDIUM | UBTU-20-010411 | PATCH | The Ubuntu operating system must set a sticky bit on all public directories to prevent unauthorized and unintended information transferred via shared system resources."
+  block:
+      - name: "MEDIUM | UBTU-20-010411 | PATCH | The Ubuntu operating system must set a sticky bit on all public directories to prevent unauthorized and unintended information transferred via shared system resources. | Find world-writable directories"
+        shell: "find / -type d \\( -perm -002 ! -perm -1000 \\) -print 2>/dev/null | sed 's/.* //'"
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010411_world_writable_directories
+
+      - name: "MEDIUM | UBTU-20-010411 | PATCH | The Ubuntu operating system must set a sticky bit on all public directories to prevent unauthorized and unintended information transferred via shared system resources. | Add sticky bit to world-writable directories"
+        file:
+            path: "{{ item }}"
+            mode: '1777'
+        with_items:
+            - "{{ ubtu_20_010411_world_writable_directories.stdout_lines }}"
+        when:
+            - ubtu_20_010411_world_writable_directories.stdout | length > 0
+  when:
+      - ubtu_20_010411
+  tags:
+      - UBTU-20-010411
+      - CAT2
+      - CCI-001090
+      - SRG-OS-000138-GPOS-00069
+      - SV-238332r654171_rule
+      - V-238332
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010412 | PATCH | The Ubuntu operating system must be configured to use TCP syncookies."
+  block:
+      - name: "MEDIUM | UBTU-20-010412 | PATCH | The Ubuntu operating system must be configured to use TCP syncookies. | Set syncookies current"
+        sysctl:
+            name: net.ipv4.tcp_syncookies
+            value: '1'
+            sysctl_set: true
+            state: present
+            reload: true
+            ignoreerrors: true
+        notify: sysctl flush ipv4 route table
+
+      - name: "MEDIUM | UBTU-20-010412 | PATCH | The Ubuntu operating system must be configured to use TCP syncookies."
+        lineinfile:
+            path: /etc/sysctl.conf
+            regexp: '^#?\s*net.ipv4.tcp_syncookies'
+            line: "net.ipv4.tcp_syncookies = 1"
+  when:
+      - ubtu_20_010412
+  tags:
+      - UBTU-20-010412
+      - CAT2
+      - CCI-001095
+      - SRG-OS-000142-GPOS-00071
+      - SV-238333r654174_rule
+      - V-238333
+      - tcp
+
+- name: "MEDIUM | UBTU-20-010413 | PATCH | The Ubuntu operating system must disable kernel core dumps so that it can fail to a secure state if system initialization fails, shutdown fails or aborts fail."
+  systemd:
+      name: kdump
+      state: stopped
+      enabled: false
+  when:
+      - ubtu_20_010413
+      - "'kexec-tools' in ansible_facts.packages"
+      - not ubtu20stig_kdump_needed
+  tags:
+      - UBTU-20-010413
+      - CAT2
+      - CCI-001190
+      - SRG-OS-000184-GPOS-00078
+      - SV-238334r654177_rule
+      - V-238334
+      - kernel_dump
+      - logging
+
+- name: "MEDIUM | UBTU-20-010414 | AUDIT | Ubuntu operating systems handling data requiring data at rest protections must employ cryptographic mechanisms to prevent unauthorized disclosure and modification of the information at rest."
+  block:
+      - name: "MEDIUM | UBTU-20-010414 | AUDIT | Ubuntu operating systems handling data requiring data at rest protections must employ cryptographic mechanisms to prevent unauthorized disclosure and modification of the information at rest. | Get encrypted partitions"
+        shell: more /etc/crypttab | sed 1d
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010414_crypttab_status
+
+      - name: "MEDIUM | UBTU-20-010414 | AUDIT | Ubuntu operating systems handling data requiring data at rest protections must employ cryptographic mechanisms to prevent unauthorized disclosure and modification of the information at rest. | Alert no partitions are encrypted"
+        debug:
+            msg:
+                - "Warning!! There are no encrypted partitions. Please make sure all permanent partitions are encrypted"
+        when: ubtu_20_010414_crypttab_status.stdout | length == 0
+
+      - name: "MEDIUM | UBTU-20-010414 | AUDIT | Ubuntu operating systems handling data requiring data at rest protections must employ cryptographic mechanisms to prevent unauthorized disclosure and modification of the information at rest. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010414'
+        when: ubtu_20_010414_crypttab_status.stdout | length == 0
+
+      - name: "MEDIUM | UBTU-20-010414 | AUDIT | Ubuntu operating systems handling data requiring data at rest protections must employ cryptographic mechanisms to prevent unauthorized disclosure and modification of the information at rest. | Alert no partitions are encrypted"
+        debug:
+            msg:
+                - "Warning!! Please review that no permanent partitions are missing. All permanent partitions need to be encrypted"
+                - "{{ ubtu_20_010414_crypttab_status.stdout_lines }}"
+        when: ubtu_20_010414_crypttab_status.stdout | length > 0
+
+      - name: "MEDIUM | UBTU-20-010414 | AUDIT | Ubuntu operating systems handling data requiring data at rest protections must employ cryptographic mechanisms to prevent unauthorized disclosure and modification of the information at rest. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010414'
+        when: ubtu_20_010414_crypttab_status.stdout | length > 0
+  when:
+      - ubtu_20_010414
+  tags:
+      - UBTU-20-010414
+      - CAT2
+      - CCI-001199
+      - SRG-OS-000185-GPOS-00079
+      - SV-238335r654180_rule
+      - V-238335
+      - encryption
+      - mounts
+
+- name: "MEDIUM | UBTU-20-010416 | PATCH | The Ubuntu operating system must generate error messages that provide information necessary for corrective actions without revealing information that could be exploited by adversaries."
+  block:
+      - name: "MEDIUM | UBTU-20-010416 | AUDIT | The Ubuntu operating system must generate error messages that provide information necessary for corrective actions without revealing information that could be exploited by adversaries. | Audit Files For Permissions"
+        shell: find /var/log ! -name '*[bw]tmp' ! -name '*lastlog' -type f -perm -640 ! -perm 640 -exec stat -c "%n" {} \;
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010416_var_log_file_permissions
+
+      - name: "MEDIUM | UBTU-20-010416 | PATCH | The Ubuntu operating system must generate error messages that provide information necessary for corrective actions without revealing information that could be exploited by adversaries. | Fix files"
+        file:
+            path: "{{ item }}"
+            mode: "{{ ubtu20stig_var_log_file_perms }}"
+        with_items:
+            - "{{ ubtu_20_010416_var_log_file_permissions.stdout_lines }}"
+        when:
+            - ubtu_20_010416_var_log_file_permissions.stdout | length > 0
+  when:
+      - ubtu_20_010416
+  tags:
+      - UBTU-20-010416
+      - CAT2
+      - CCI-001312
+      - SRG-OS-000205-GPOS-00083
+      - SV-238337r880876_rule
+      - V-238337
+      - permissions
+
+- name: |
+    "MEDIUM | UBTU-20-010417 | PATCH | The Ubuntu operating system must configure the /var/log directory to be group-owned by syslog."
+    "MEDIUM | UBTU-20-010418 | PATCH | The Ubuntu operating system must configure the /var/log directory to be owned by root."
+  file:
+      path: /var/log
+      owner: "{{ ubtu_20_010418 | ternary('root',omit) }}"
+      group: "{{ ubtu_20_010417 | ternary('syslog',omit) }}"
+      state: directory
+  when:
+      - ubtu_20_010417 or
+        ubtu_20_010418
+  tags:
+      - UBTU-20-010417
+      - UBTU-20-010418
+      - CAT2
+      - CCI-001314
+      - SRG-OS-000206-GPOS-00084
+      - SV-238338r654189_rule
+      - SV-238339r654192_rule
+      - V-238338
+      - V-238339
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010419 | PATCH | The Ubuntu operating system must configure the /var/log directory to have mode 0755 or less permissive."
+  block:
+      - name: "MEDIUM | UBTU-20-010419 | AUDIT | The Ubuntu operating system must configure the /var/log directory to have mode 0755 or less permissive. | Find Dir Permissions."
+        shell: stat -c "%a" /var/log
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010419_var_log_dir_permissions_audit
+
+      - name: "MEDIUM | UBTU-20-010419 | PATCH | The Ubuntu operating system must configure the /var/log directory to have mode 0755 or less permissive. | Change Log Dir Permissions."
+        file:
+            path: /var/log
+            mode: "{{ ubtu20stig_var_log_perms }}"
+            state: directory
+        when:
+            - ubtu_20_010419_var_log_dir_permissions_audit.stdout > '755'
+  when:
+      - ubtu_20_010419
+  tags:
+      - UBTU-20-010419
+      - CAT2
+      - CCI-001314
+      - SRG-OS-000206-GPOS-00084
+      - SV-238340r880879_rule
+      - V-238340
+      - permissions
+
+- name: |
+    "MEDIUM | UBTU-20-010420 | PATCH | The Ubuntu operating system must configure the /var/log/syslog file to be group-owned by adm."
+    "MEDIUM | UBTU-20-010421 | PATCH | he Ubuntu operating system must configure /var/log/syslog file to be owned by syslog."
+  file:
+      path: /var/log/syslog
+      owner: "{{ ubtu_20_010421 | ternary('syslog',omit) }}"
+      group: "{{ ubtu_20_010420 | ternary('adm',omit) }}"
+  when:
+      - ubtu_20_010420 or
+        ubtu_20_010421
+  tags:
+      - UBTU-20-010420
+      - UBTU-20-010421
+      - CAT2
+      - CCI-001314
+      - SRG-OS-000206-GPOS-00084
+      - SV-238341r654198_rule
+      - SV-238342r654201_rule
+      - V-238341
+      - V-238342
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010422 | PATCH | The Ubuntu operating system must configure /var/log/syslog file with mode 0640 or less permissive."
+  block:
+      - name: "MEDIUM | UBTU-20-010422 | AUDIT | The Ubuntu operating system must configure /var/log/syslog file with mode 0640 or less permissive. | Find Dir Permissions."
+        shell: stat -c "%a" /var/log/syslog
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010422_var_log_syslog_dir_permissions_audit
+
+      - name: "MEDIUM | UBTU-20-010422 | PATCH | The Ubuntu operating system must configure /var/log/syslog file with mode 0640 or less permissive. | Change SysLog Dir Permissions."
+        file:
+            path: /var/log/syslog
+            mode: "{{ ubtu20stig_var_log_syslog_perms }}"
+        when:
+            - ubtu_20_010422_var_log_syslog_dir_permissions_audit.stdout > '640'
+  when:
+      - ubtu_20_010422
+  tags:
+      - UBTU-20-010422
+      - CAT2
+      - CCI-001314
+      - SRG-OS-000206-GPOS-00084
+      - SV-238343r654204_rule
+      - V-238343
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010423 | PATCH | The Ubuntu operating system must have directories that contain system commands set to a mode of 0755 or less permissive."
+  block:
+      - name: "MEDIUM | UBTU-20-010423 | AUDIT | The Ubuntu operating system must have directories that contain system commands set to a mode of 0755 or less permissive. | Get OS command directories with mode more than 755"
+        shell: find -L /bin /sbin /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin -type d -perm -755 ! -perm 755
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010423_command_dir_permissions_audit
+
+      - name: "MEDIUM | UBTU-20-010423 | PATCH | The Ubuntu operating system must have directories that contain system commands set to a mode of 0755 or less permissive. | Set Dir Permissions."
+        file:
+            path: "{{ item }}"
+            mode: "{{ ubtu20stig_sys_comm_dir_perms }}"
+            state: directory
+        with_items:
+            - "{{ ubtu_20_010423_command_dir_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010423_command_dir_permissions_audit.stdout | length > 0
+  tags:
+      - UBTU-20-010423
+      - CAT2
+      - CCI-001495
+      - SRG-OS-000258-GPOS-00099
+      - SV-238344r654207_rule
+      - V-238344
+      - permissions
+
+- name: |
+    "MEDIUM | UBTU-20-010424 | PATCH | The Ubuntu operating system must have directories that contain system commands owned by root."
+    "MEDIUM | UBTU-20-010425 | PATCH | The Ubuntu operating system must have directories that contain system commands group-owned by root."
+  block:
+      - name: |
+          "MEDIUM | UBTU-20-010424 | AUDIT | The Ubuntu operating system must have directories that contain system commands owned by root. | Get OS command dirs not owned by root"
+          "MEDIUM | UBTU-20-010425 | AUDIT | The Ubuntu operating system must have directories that contain system commands group-owned by root. | Get OS command dirs not group-owned by root"
+        shell: find -L /bin /sbin /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin \( ! -group root -o ! -user root \) -type d -exec stat -c "%n" '{}' \;
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010423_command_dir_perms
+
+      - name: |
+          "MEDIUM | UBTU-20-010424 | PATCH | The Ubuntu operating system must have directories that contain system commands owned by root. | Set OS command dirs not owned by root to root"
+          "MEDIUM | UBTU-20-010425 | PATCH | The Ubuntu operating system must have directories that contain system commands group-owned by root. | Set OS command dirs not group-owned by root to root"
+        file:
+            path: "{{ item }}"
+            owner: "{{ ubtu_20_010424 | ternary('root',omit) }}"
+            group: "{{ ubtu_20_010425 | ternary('root',omit) }}"
+            state: directory
+        with_items:
+            - "{{ ubtu_20_010423_command_dir_perms.stdout_lines }}"
+        when:
+            - ubtu_20_010423_command_dir_perms.stdout | length > 0
+  when:
+      - ubtu_20_010424 or
+        ubtu_20_010425
+  tags:
+      - UBTU-20-010424
+      - UBTU-20-010425
+      - CAT2
+      - CCI-001495
+      - SRG-OS-000258-GPOS-00099
+      - SV-238345r654210_rule
+      - SV-238346r654213_rule
+      - V-238345
+      - V-238346
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010426 | PATCH | The Ubuntu operating system library files must have mode 0755 or less permissive."
+  block:
+      - name: "MEDIUM | UBTU-20-010426 | AUDIT | The Ubuntu operating system library files must have mode 0755 or less permissive. | Get List."
+        shell: find -L /lib/* /lib64/* /usr/lib/* -type f -perm -755 ! -perm 755
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010426_lib_files
+
+      - name: "MEDIUM | UBTU-20-010426 | PATCH | The Ubuntu operating system library files must have mode 0755 or less permissive. | Update Permissions."
+        file:
+            path: "{{ item }}"
+            mode: "{{ ubtu20stig_lib_file_perms }}"
+        with_items:
+            - "{{ ubtu_20_010426_lib_files.stdout_lines }}"
+        when:
+            - ubtu_20_010426_lib_files.stdout | length > 0
+  when:
+      - ubtu_20_010426
+  tags:
+      - UBTU-20-010426
+      - CAT2
+      - CCI-001499
+      - SRG-OS-000259-GPOS-00100
+      - SV-238347r654216_rule
+      - V-238347
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010427 | PATCH | The Ubuntu operating system library directories must have mode 0755 or less permissive."
+  block:
+      - name: "MEDIUM | UBTU-20-010427 | AUDIT | The Ubuntu operating system library directories must have mode 0755 or less permissive. | Get library directories with 755 or less"
+        shell: find -L /lib /lib64 /usr/lib -type d -perm -755 ! -perm 755
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010427_lib_dirs
+
+      - name: "MEDIUM | UBTU-20-010427 | PATCH | The Ubuntu operating system library directories must have mode 0755 or less permissive. | Set library directories with 755 or more restrictive"
+        file:
+            path: "{{ item }}"
+            mode: "{{ ubtu20stig_lib_dir_perms }}"
+            state: directory
+        with_items:
+            - "{{ ubtu_20_010427_lib_dirs.stdout_lines }}"
+        when:
+            - ubtu_20_010427_lib_dirs.stdout | length > 0
+  when:
+      - ubtu_20_010427
+  tags:
+      - UBTU-20-010427s
+      - CAT2
+      - CCI-001499
+      - SRG-OS-000259-GPOS-00100
+      - SV-238348r654219_rule
+      - V-238348
+      - permissions
+
+- name: |
+    "MEDIUM | UBTU-20-010428 | PATCH | The Ubuntu operating system library files must be owned by root."
+    "MEDIUM | UBTU-20-010430 | PATCH | The Ubuntu operating system library files must be group-owned by root."
+  block:
+      - name: |
+          "MEDIUM | UBTU-20-010428 | AUDIT | The Ubuntu operating system library files must be owned by root. | Get library files not owned by root"
+          "MEDIUM | UBTU-20-010430 | AUDIT | The Ubuntu operating system library files must be group-owned by root. | Get library files not group-owned by root"
+        shell: find -L /lib /lib64 /usr/lib -type f ! -user root -o -type f ! -group root
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010428_lib_files_permissions_audit
+
+      - name: |
+          "MEDIUM | UBTU-20-010428 | PATCH | The Ubuntu operating system library files must be owned by root. | Set library files to be owned by root"
+          "MEDIUM | UBTU-20-010430 | PATCH | The Ubuntu operating system library files must be group-owned by root. | Set library files not group-owned by root"
+        file:
+            path: "{{ item }}"
+            owner: "{{ ubtu_20_010428 | ternary('root',omit) }}"
+            group: "{{ ubtu_20_010430 | ternary('root',omit) }}"
+        with_items:
+            - "{{ ubtu_20_010428_lib_files_permissions_audit.stdout_lines }}"
+        when:
+            - ubtu_20_010428_lib_files_permissions_audit.stdout | length > 0
+  when:
+      - ubtu_20_010428 or
+        ubtu_20_010430
+  tags:
+      - UBTU-20-010428
+      - UBTU-20-010430
+      - CAT2
+      - CCI-001499
+      - SRG-OS-000259-GPOS-00100
+      - SV-238349r654222_rule
+      - SV-238351r832962_rule
+      - V-238349
+      - V-238351
+      - permissions
+
+- name: |
+    "MEDIUM | UBTU-20-010429 | PATCH | The Ubuntu operating system library directories must be owned by root."
+    "MEDIUM | UBTU-20-010431 | PATCH | The Ubuntu operating system library directories must be group-owned by root."
+  block:
+      - name: |
+          "MEDIUM | UBTU-20-010429 | AUDIT | The Ubuntu operating system library directories must be owned by root. | Get OS library directories not owned by root"
+          "MEDIUM | UBTU-20-010431 | AUDIT | The Ubuntu operating system library directories must be group-owned by root. | Get OS library directories not group-owned by root"
+        shell: find -L /lib /lib64 /usr/lib -type d ! -user root -o -type d ! -group root
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010427_lib_dirs
+
+      - name: |
+          "MEDIUM | UBTU-20-010429 | PATCH | The Ubuntu operating system library directories must be owned by root. | Set OS library directories not owned by root"
+          "MEDIUM | UBTU-20-010431 | PATCH | The Ubuntu operating system library directories must be group-owned by root. | Set OS library directories not group-owned by root"
+        file:
+            path: "{{ item }}"
+            owner: "{{ ubtu_20_010429 | ternary('root',omit) }}"
+            group: "{{ ubtu_20_010431 | ternary('root',omit) }}"
+            state: directory
+        with_items:
+            - "{{ ubtu_20_010427_lib_dirs.stdout_lines }}"
+        when:
+            - ubtu_20_010427_lib_dirs.stdout | length > 0
+  when:
+      - ubtu_20_010429 or
+        ubtu_20_010431
+  tags:
+      - UBTU-20-010429
+      - UBTU-20-010431
+      - CAT2
+      - CCI-001499
+      - SRG-OS-000259-GPOS-00100
+      - SV-238350r654225_rule
+      - SV-238352r654231_rule
+      - V-238350
+      - V-238352
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010432 | PATCH | The Ubuntu operating system must be configured to preserve log records from failure events."
+  service:
+      name: rsyslog
+      state: started
+      enabled: true
+  when:
+      - ubtu_20_010432
+  tags:
+      - UBTU-20-010432
+      - CAT2
+      - CCI-001665
+      - SRG-OS-000269-GPOS-00103
+      - SV-238353r654234_rule
+      - V-238353
+      - rsyslog
+
+- name: "MEDIUM | UBTU-20-010433 | PATCH | The Ubuntu operating system must have an application firewall installed in order to control remote access methods."
+  package:
+      name: ufw
+      state: present
+  when:
+      - ubtu_20_010433
+  tags:
+      - UBTU-20-010433
+      - CAT2
+      - CCI-002314
+      - SRG-OS-000297-GPOS-00115
+      - SV-238354r853429_rule
+      - V-238354
+      - ufw
+      - firewall
+
+- name: |
+        "MEDIUM | UBTU-20-010434 | PATCH | The Ubuntu operating system must enable and run the uncomplicated firewall(ufw)."
+        "MEDIUM | UBTU-20-010454 | PATCH | The Ubuntu operating system must have an application firewall enabled."
+  systemd:
+      name: ufw
+      state: started
+      enabled: true
+  when:
+      - ubtu_20_010434 or
+        ubtu_20_010454
+  tags:
+      - UBTU-20-010434
+      - UBTU-20-010454
+      - CAT2
+      - CCI-002314
+      - CCI-000366
+      - SRG-OS-000297-GPOS-00115
+      - SV-238374r654297_rule
+      - SV-238355r853430_rule
+      - V-238355
+      - V-238374
+      - firewall
+      - ufw
+
+- name: "MEDIUM | UBTU-20-010435 | PATCH | The Ubuntu operating system must, for networked systems, compare internal information system clocks at least every 24 hours with a server which is synchronized to one of the redundant United States Naval Observatory (USNO) time servers, or a time server designated for the appropriate DoD network (NIPRNet/SIPRNet), and/or the Global Positioning System (GPS)."
+  lineinfile:
+      path: /etc/chrony/chrony.conf
+      regexp: '^server {{ item }} iburst'
+      line: "server {{ item }} iburst maxpoll {{ ubtu20stig_iburst_maxpoll_value }}"
+  with_items:
+      - "{{ ubtu20stig_dod_timesource }}"
+  when:
+      - ubtu_20_010435
+  tags:
+      - UBTU-20-010435
+      - CAT2
+      - CCI-001891
+      - SRG-OS-000355-GPOS-00143
+      - SV-238356r877038_rule
+      - V-238356
+      - chrony
+
+- name: "MEDIUM | UBTU-20-010437 | PATCH | The Ubuntu operating system must notify designated personnel if baseline configurations are changed in an unauthorized manner. The file integrity tool must notify the system administrator when changes to the baseline configuration or anomalies in the operation of any security functions are discovered."
+  lineinfile:
+      path: /etc/default/aide
+      regexp: '^#?\s*SILENTREPORTS='
+      line: "SILENTREPORTS=no"
+  when:
+      - ubtu_20_010437 or
+        ubtu_20_010451
+  tags:
+      - UBTU-20-010437
+      - UBTU-20-010451
+      - CAT2
+      - CCI-001744
+      - CCI-002702
+      - SRG-OS-000363-GPOS-00150
+      - SRG-OS-000447-GPOS-00201
+      - SV-238358r853433_rule
+      - SV-238372r853449_rule
+      - V-238358
+      - V-238372
+      - aide
+
+- name: "MEDIUM | UBTU-20-010438 | PATCH | The Ubuntu operating system's Advance Package Tool (APT) must be configured to prevent the installation of patches, service packs, device drivers, or Ubuntu operating system components without verification they have been digitally signed using a certificate that is recognized and approved by the organization."
+  block:
+      - name: "MEDIUM | UBTU-20-010438 | AUDIT | The Ubuntu operating system's Advance Package Tool (APT) must be configured to prevent the installation of patches, service packs, device drivers, or Ubuntu operating system components without verification they have been digitally signed using a certificate that is recognized and approved by the organization. | Find AllowUnauthenticated true"
+        shell: "grep 'AllowUnauthenticated \"true\"' /etc/apt/apt.conf.d/* | cut -d: -f1"
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010438_apt_allowunauthenticated_status
+
+      - name: "MEDIUM | UBTU-20-010438 | PATCH | The Ubuntu operating system's Advance Package Tool (APT) must be configured to prevent the installation of patches, service packs, device drivers, or Ubuntu operating system components without verification they have been digitally signed using a certificate that is recognized and approved by the organization. | Fix AllowUnauthenticated to false"
+        replace:
+            path: "{{ item }}"
+            regexp: 'AllowUnauthenticated "true"'
+            replace: 'AllowUnauthenticated "false"'
+        with_items:
+            - "{{ ubtu_20_010438_apt_allowunauthenticated_status.stdout_lines }}"
+        when: ubtu_20_010438_apt_allowunauthenticated_status.stdout | length > 0
+  when:
+      - ubtu_20_010438
+  tags:
+      - UBTU-20-010438
+      - CAT2
+      - CCI-001749
+      - SRG-OS-000366-GPOS-00153
+      - SV-238359r877463_rule
+      - V-238359
+      - apt
+
+- name: "MEDIUM | UBTU-20-010439 | PATCH | The Ubuntu operating system must be configured to use AppArmor."
+  block:
+      - name: "MEDIUM | UBTU-20-010439 | PATCH | The Ubuntu operating system must be configured to use AppArmor. | Install apparmor"
+        package:
+            name: apparmor
+            state: present
+        when: "'apparmor' not in ansible_facts.packages"
+
+      - name: "MEDIUM | UBTU-20-010439 | PATCH | The Ubuntu operating system must be configured to use AppArmor. | Enable and start apparmor service"
+        systemd:
+            name: apparmor
+            state: started
+            enabled: true
+
+      - name: "MEDIUM | UBTU-20-010439 | PATCH | The Ubuntu operating system must be configured to use AppArmor. | Warning Message."
+        debug:
+            msg:
+                - "Warning!! AppArmor must have properly configured profiles for applications and home directories."
+                - "All configurations will be based on the actual system setup and organization and normally are on a per role basis."
+
+      - name: "MEDIUM | UBTU-20-010439 | PATCH | The Ubuntu operating system must be configured to use AppArmor. | Warn Count."
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010439'
+  when:
+      - ubtu_20_010439
+  tags:
+      - UBTU-20-010439
+      - CAT2
+      - CCI-001764
+      - CCI-001774
+      - CCI-002165
+      - CCI-002235
+      - SRG-OS-000368-GPOS-00154
+      - SV-238360r853435_rule
+      - V-238360
+      - apparmor
+      - firewall
+
+- name: "MEDIUM | UBTU-20-010440 | AUDIT | The Ubuntu operating system must allow the use of a temporary password for system logons with an immediate change to a permanent password.."
+  block:
+      - name: "MEDIUM | UBTU-20-010440 | AUDIT | The Ubuntu operating system must allow the use of a temporary password for system logons with an immediate change to a permanent password.. | Message out warning"
+        debug:
+            msg:
+                - "Warning!! Please create a policy that ensures when a user is created, it is created using a method that forces a user to change their password upon their next login."
+                - 'For example: "chage -d 0 [UserName]" or "passwd -e [UserName]"'
+
+      - name: "MEDIUM | UBTU-20-010440 | AUDIT | The Ubuntu operating system must allow the use of a temporary password for system logons with an immediate change to a permanent password. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010440'
+  when:
+      - ubtu_20_010440
+  tags:
+      - UBTU-20-010440
+      - CAT2
+      - CCI-002041
+      - SRG-OS-000380-GPOS-00165
+      - SV-238361r853436_rule
+      - V-238361
+      - passwords
+      - accounts
+
+- name: "MEDIUM | UBTU-20-010443 | AUDIT | The Ubuntu operating system must only allow the use of DoD PKI-established certificate authorities for verification of the establishment of protected sessions."
+  block:
+      - name: "MEDIUM | UBTU-20-010443 | AUDIT | The Ubuntu operating system must only allow the use of DoD PKI-established certificate authorities for verification of the establishment of protected sessions.  | Message out warning"
+        debug:
+            msg:
+                - "Warning!! This control is a manual control."
+                - "Please use at least one DoD certificate authority to the '/usr/local/share/ca-certificates' directory in the PEM format."
+
+      - name: "MEDIUM | UBTU-20-010443 | AUDIT | The Ubuntu operating system must only allow the use of DoD PKI-established certificate authorities for verification of the establishment of protected sessions. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010443'
+  when:
+      - ubtu_20_010443
+  tags:
+      - UBTU-20-010443
+      - CAT2
+      - CCI-002470
+      - SRG-OS-000403-GPOS-00182
+      - SV-238364r880902_rule
+      - V-238364
+      - certificates
+
+- name: |
+        "MEDIUM | UBTU-20-010444 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized modification of all information at rest."
+        "MEDIUM | UBTU-20-010445 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized disclosure of all information at rest."
+  block:
+      - name: |
+              "MEDIUM | UBTU-20-010444 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized modification of all information at rest. | Get encrypted partitions"
+              "MEDIUM | UBTU-20-010445 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized disclosure of all information at rest. | Get encrypted partitions"
+        shell: more /etc/crypttab | sed 1d
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010444_crypttab_status
+
+      - name: |
+              "MEDIUM | UBTU-20-010444 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized modification of all information at rest. | Alert no partitions are encrypted"
+              "MEDIUM | UBTU-20-010445 | AUDIT | Ubuntu operatinag system must implement cryptographic mechanisms to prevent unauthorized disclosure of all information at rest. | Alert no partitions are encrypted"
+        debug:
+            msg:
+                - "Warning!! There are no encrypted partitions. Please make sure all permanent partitions are encrypted"
+        when: ubtu_20_010444_crypttab_status.stdout | length == 0
+
+      - name: |
+              "MEDIUM | UBTU-20-010444 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized modification of all information at rest. | Set warning count"
+              "MEDIUM | UBTU-20-010445 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized disclosure of all information at rest. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010444 | UBTU-20-010445'
+        when: ubtu_20_010444_crypttab_status.stdout | length == 0
+
+      - name: |
+              "MEDIUM | UBTU-20-010444 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized modification of all information at rest. | Alert no partitions are encrypted"
+              "MEDIUM | UBTU-20-010445 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized disclosure of all information at rest. | Alert no partitions are encrypted"
+        debug:
+            msg:
+                - "Warning!! Please review that no permanent partitions are missing. All permanent partitions need to be encrypted"
+                - "{{ ubtu_20_010444_crypttab_status.stdout_lines }}"
+        when: ubtu_20_010444_crypttab_status.stdout | length > 0
+
+      - name: |
+              "MEDIUM | UBTU-20-010444 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized modification of all information at rest. | Set warning count"
+              "MEDIUM | UBTU-20-010445 | AUDIT | Ubuntu operating system must implement cryptographic mechanisms to prevent unauthorized disclosure of all information at rest. | Set warning count"
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010444 | UBTU-20-010445'
+        when: ubtu_20_010444_crypttab_status.stdout | length > 0
+  when:
+      - ubtu_20_010444 or
+        ubtu_20_010445
+  tags:
+      - UBTU-20-010444
+      - UBTU-20-010445
+      - CAT2
+      - CCI-002475
+      - CCI-002476
+      - SRG-OS-000404-GPOS-00183
+      - SV-238365r877379_rule
+      - SV-238366r877378_rule
+      - V-238365
+      - V-238366
+      - encryption
+      - mounts
+
+- name: "MEDIUM | UBTU-20-010446 | PATCH | The Ubuntu operating system must configure the uncomplicated firewall to rate-limit impacted network interfaces."
+  block:
+      - name: "MEDIUM | UBTU-20-010446 | PATCH | The Ubuntu operating system must configure the uncomplicated firewall to rate-limit impacted network interfaces. | limit on service"
+        ufw:
+            rule: limit
+            name: "{{ item }}"
+        with_items:
+            - "{{ ubtu20stig_limit_services }}"
+        when: "'service' in ubtu20stig_limit_method"
+
+      - name: "MEDIUM | UBTU-20-010446 | PATCH | The Ubuntu operating system must configure the uncomplicated firewall to rate-limit impacted network interfaces.| Limit on network ports"
+        ufw:
+            rule: limit
+            interface: "{{ item }}"
+            direction: in
+        with_items:
+            - "{{ ubtu20stig_limit_eth_port }}"
+        when: "'eth_port' in ubtu20stig_limit_method"
+  when:
+      - ubtu_20_010446
+  tags:
+      - UBTU-20-010446
+      - CAT2
+      - CCI-002385
+      - SRG-OS-000420-GPOS-00186
+      - SV-219340r853399_rule
+      - V-219340
+      - ufw
+
+- name: "MEDIUM | UBTU-20-010447 | AUDIT | The Ubuntu operating system must implement nonexecutable data to protect its memory from unauthorized code execution."
+  block:
+      - name: "MEDIUM | UBTU-20-010447 | AUDIT | The Ubuntu operating system must implement nonexecutable data to protect its memory from unauthorized code execution. | Check No execution bit flag."
+        shell: dmesg | grep -i "execute disable"
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010447_nx_dmesg
+
+      - name: "MEDIUM | UBTU-20-010447 | AUDIT | The Ubuntu operating system must implement nonexecutable data to protect its memory from unauthorized code execution. | Dmesg Does Not Contain NX (Execute Disable) protection active."
+        shell: grep flags /proc/cpuinfo | grep -w nx | sort -u
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010447_cpuinfo_settings
+
+      - name: "MEDIUM | UBTU-20-010447 | AUDIT | The Ubuntu operating system must implement nonexecutable data to protect its memory from unauthorized code execution. | Warning Out."
+        debug:
+            msg:
+                - "Warning!! The Ubuntu system you are on does not have NX enabled."
+                - "Please enter the BIOS of this system and toggle the No Execution bit to Enable it."
+        when:
+            - "'nx' not in ubtu_20_010447_cpuinfo_settings.stdout or '[    0.000000] NX (Execute Disable) protection: active' not in ubtu_20_010447_nx_dmesg.stdout"
+
+      - name: "MEDIUM | UBTU-20-010447 | AUDIT | The Ubuntu operating system must implement nonexecutable data to protect its memory from unauthorized code execution. | Warning Count."
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010447'
+  when:
+      - ubtu_20_010447
+  tags:
+      - UBTU-20-010447
+      - CAT2
+      - CCI-002824
+      - SRG-OS-000433-GPOS-00192
+      - SV-238368r880910_rule
+      - V-238368
+      - nx
+
+- name: "MEDIUM | UBTU-20-010448 | PATCH | The Ubuntu operating system must implement address space layout randomization to protect its memory from unauthorized code execution."
+  lineinfile:
+      path: /etc/sysctl.conf
+      regexp: '^#?\s*kernel.randomize_va_space'
+      line: "kernel.randomize_va_space=2"
+  notify: reload kernel system
+  when:
+      - ubtu_20_010448
+  tags:
+      - UBTU-20-010448
+      - CAT2
+      - CCI-002824
+      - SRG-OS-000433-GPOS-00193
+      - SV-238369r853446_rule
+      - V-238369
+      - kernel
+
+
+- name: "MEDIUM | UBTU-20-010449 | PATCH | The Ubuntu operating system must be configured so that Advance Package Tool (APT) removes all software components after updated versions have been installed."
+  block:
+      - name: "MEDIUM | UBTU-20-010449 | AUDIT | The Ubuntu operating system must be configured so that Advance Package Tool (APT) removes all software components after updated versions have been installed. | Find Remove-Unused-Kernel-Packages"
+        shell: "grep -i 'remove-unused-kernel-packages \"false\"' /etc/apt/apt.conf.d/* | cut -d: -f1"
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010449_remove_unused_kernel_packages_status
+
+      - name: "MEDIUM | UBTU-20-010449 | AUDIT | The Ubuntu operating system must be configured so that Advance Package Tool (APT) removes all software components after updated versions have been installed. | Find Remove-Unused-Dependencies"
+        shell: "grep -i 'remove-unused-dependencies \"false\"' /etc/apt/apt.conf.d/* | cut -d: -f1"
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010449_remove_unused_dependencies_status
+
+      - name: "MEDIUM | UBTU-20-010449 | PATCH | The Ubuntu operating system must be configured so that Advance Package Tool (APT) removes all software components after updated versions have been installed. | Set Remove-Unused-Kernel-Packages"
+        lineinfile:
+            path: "{{ item.path }}"
+            regexp: "{{ item.regexp }}"
+            line: "{{ item.line }}"
+            create: true
+            mode: 644  # noqa: risky-octal
+            owner: root
+            group: root
+        with_items:
+            - { path: "{{ (ubtu_20_010449_remove_unused_kernel_packages_status.stdout | length == 0 ) | ternary('/etc/apt/apt.conf.d/50unattended-upgrades',ubtu_20_010449_remove_unused_kernel_packages_status.stdout) }}", regexp: 'Unattended-Upgrade::Remove-Unused-Kernel-Packages', line: 'Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";' }
+            - { path: "{{ (ubtu_20_010449_remove_unused_dependencies_status.stdout | length == 0 ) | ternary('/etc/apt/apt.conf.d/50unattended-upgrades',ubtu_20_010449_remove_unused_dependencies_status.stdout) }}", regexp: 'Unattended-Upgrade::Remove-Unused-Dependencies', line: 'Unattended-Upgrade::Remove-Unused-Dependencies "true";' }
+        loop_control:
+            label: "{{ item.line }}"
+  when:
+      - ubtu_20_010449
+  tags:
+      - UBTU-20-010449
+      - CAT2
+      - CCI-002617
+      - SRG-OS-000437-GPOS-00194
+      - SV-238370r853447_rule
+      - V-238370
+      - apt
+
+- name: "MEDIUM | UBTU-20-010450 | PATCH | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions."
+  block:
+      - name: "MEDIUM | UBTU-20-010450 | PATCH | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions. | Install Package."
+        package:
+            name: aide
+            state: present
+        when: "'aide' not in ansible_facts.packages"
+
+      - name: "MEDIUM | UBTU-20-010450 | AUDIT | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions. | Check For Aide.db."
+        stat:
+            path: /var/lib/aide/aide.db
+        register: ubtu_20_010450_aidedb_present
+
+      - name: "MEDIUM | UBTU-20-010450 | AUDIT | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions. | Check For Aide.db.new."
+        stat:
+            path: /var/lib/aide/aide.db.new
+        register: ubtu_20_010450_aidedbnew_present
+
+      - name: "MEDIUM | UBTU-20-010450 | PATCH | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions. | Initialize If Not Already Running."
+        shell: aideinit
+        become: true
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010450_aide_initialized
+        when:
+            - not ubtu_20_010450_aidedb_present.stat.exists
+            - not ubtu_20_010450_aidedbnew_present.stat.exists
+
+      - name: "MEDIUM | UBTU-20-010450 | PATCH | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions. | Copy New Database."
+        shell: cp -p /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+        become: true
+        changed_when: false
+        failed_when: false
+        when:
+            - not ubtu_20_010450_aidedb_present.stat.exists
+            - not ubtu_20_010450_aidedbnew_present.stat.exists
+
+      - name: "MEDIUM | UBTU-20-010450 | AUDIT | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions. | Perform New Manual Check Warning."
+        debug:
+            msg:
+                - "Warning!! AIDE package is installed and currently initialized."
+                - "Use the following command | sudo aide.wrapper --check | to perform"
+                - "a manual check and verify it conforms to site policies."
+
+      - name: "MEDIUM | UBTU-20-010450 | AUDIT | The Ubuntu operating system must use a file integrity tool to verify correct operation of all security functions. | Warning Out."
+        import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: 'UBTU-20-010450'
+  when:
+      - ubtu_20_010450
+  tags:
+      - UBTU-20-010450
+      - CAT2
+      - CCI-002696
+      - SRG-OS-000445-GPOS-00199
+      - SV-238371r880913_rule
+      - V-238371
+      - aide
+
+- name: |
+    "MEDIUM | UBTU-20-010456 | PATCH | The Ubuntu operating system must have system commands set to a mode of 0755 or less permissive."
+    "MEDIUM | UBTU-20-010457 | PATCH | The Ubuntu operating system must have system commands owned by root or a system account."
+    "MEDIUM | UBTU-20-010458 | PATCH | The Ubuntu operating system must have system commands group-owned by root or a system account."
+  block:
+      - name: |
+          "MEDIUM | UBTU-20-010456 | AUDIT | The Ubuntu operating system must have system commands set to a mode of 0755 or less permissive. | Get OS commands with mode less than 755"
+          "MEDIUM | UBTU-20-010457 | AUDIT | The Ubuntu operating system must have system commands owned by root or a system account. | Get OS commands not owned by root"
+          "MEDIUM | UBTU-20-010458 | PATCH | The Ubuntu operating system must have system commands group-owned by root or a system account. | Get OS commands not group-owned by root"
+        shell: find -L /bin /sbin /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin \( ! -group root -o ! -user root -o -perm /022 \) -type f -exec stat -c "%n" '{}' \;
+        # sudo find -L /bin /sbin /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin ! -user root -type f -exec stat -c "%n %U" '{}' \;
+        changed_when: false
+        failed_when: false
+        register: ubtu_20_010456_commands_perms
+
+      - name: |
+          "MEDIUM | UBTU-20-010456 | PATCH | The Ubuntu operating system must have system commands set to a mode of 0755 or less permissive. | Set OS commands with mode 755 or more restricive"
+          "MEDIUM | UBTU-20-010457 | PATCH | The Ubuntu operating system must have system commands owned by root or a system account. | Set OS commands not owned by root to owned by root"
+          "MEDIUM | UBTU-20-010458 | PATCH | The Ubuntu operating system must have system commands group-owned by root or a system account. | Set OS commands not group-owned by root to root"
+        file:
+            path: "{{ item }}"
+            owner: "{{ ubtu_20_010457 | ternary('root',omit) }}"
+            group: "{{ ubtu_20_010458 | ternary('root',omit) }}"
+            mode: "{{ ubtu_20_010456 | ternary(ubtu20stig_sys_commands_perms,omit) }}"
+        with_items:
+            - "{{ ubtu_20_010456_commands_perms.stdout_lines }}"
+        when: ubtu_20_010456_commands_perms.stdout | length > 0
+  when:
+      - ubtu_20_010456 or
+        ubtu_20_010457 or
+        ubtu_20_010458
+  tags:
+      - UBTU-20-010456
+      - UBTU-20-010457
+      - UBTU-20-010458
+      - CAT2
+      - CCI-001499
+      - SRG-OS-000259-GPOS-00100
+      - SV-238376r654303_rule
+      - SV-238377r832968_rule
+      - SV-238378r832971_rule
+      - V-238376
+      - V-238377
+      - V-238378
+      - permissions
+
+- name: "MEDIUM | UBTU-20-010461 | PATCH | The Ubuntu operating system must disable automatic mounting of Universal Serial Bus (USB) mass storage driver."
+  block:
+      - name: "MEDIUM | UBTU-20-010461 | PATCH | The Ubuntu operating system must disable automatic mounting of Universal Serial Bus (USB) mass storage driver. | Set modprobe config"
+        lineinfile:
+            path: /etc/modprobe.d/DISASTIG.conf
+            regexp: "{{ item.regexp }}"
+            line: "{{ item.line }}"
+            create: true
+        with_items:
+            - { regexp: '^install usb-storage', line: 'install usb-storage /bin/true' }
+            - { regexp: '^blacklist usb-storage', line: 'blacklist usb-storage' }
+
+      - name: "MEDIUM | UBTU-20-010461 | PATCH | The Ubuntu operating system must disable automatic mounting of Universal Serial Bus (USB) mass storage driver. | Remove USB storage module"
+        modprobe:
+            name: usb-storage
+            state: absent
+        when: ansible_connection != 'docker'
+  when:
+      - ubtu_20_010461
+  tags:
+      - UBTU-20-010461
+      - CAT2
+      - CCI-001958
+      - SRG-OS-000378-GPOS-00163
+      - SV-251505r853450_rule
+      - V-251505
+      - usb
+
+- name: "MEDIUM | UBTU-20-010455 | PATCH | The Ubuntu operating system must disable all wireless network adapters."
+  block:
+      - name: "MEDIUM | UBTU-20-010455 | PATCH | The Ubuntu operating system must disable all wireless network adapters. | Check if Wifi Enabled"
+        shell: nmcli radio wifi
+        changed_when: ubtu_20_010455_wifi_enabled.stdout != "disabled"
+        failed_when: false
+        check_mode: false
+        register: ubtu_20_010455_wifi_enabled
+        when: "'network-manager' in ansible_facts.packages"
+
+      - name: "MEDIUM | UBTU-20-010455 | PATCH | The Ubuntu operating system must disable all wireless network adapters. | Disable Wifi if Enabled"
+        shell: nmcli radio wifi off
+        when:
+            - ubtu_20_010455_wifi_enabled is changed
+            - "'network-manager' in ansible_facts.packages"
+  when:
+      - ubtu_20_010455
+  tags:
+      - UBTU-20-010455
+      - CAT2
+      - CCI-002418
+      - SRG-OS-000481-GPOS-00481
+      - SV-252704r854182_rule
+      - V-252704
+      - networking
+      - wireless
+
+- name: "MEDIUM | UBTU-20-010045 | PATCH | The Ubuntu operating system SSH server must be configured to use only FIPS-validated key exchange algorithms."
+  lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#?\s*KexAlgorithms'
+      line: 'KexAlgorithms {{ ubtu20stig_sshd.kexalgorithms }}'
+  notify: restart sshd
+  when:
+      - ubtu_20_010045
+  tags:
+      - UBTU-20-010045
+      - CAT2
+      - CCI-000068
+      - SRG-OS-000250-GPOS-00093
+      - SV-255912r880905_rule
+      - V-255912
+      - sshd

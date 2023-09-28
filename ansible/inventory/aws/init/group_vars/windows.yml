@@ -1,0 +1,6 @@
+---
+ansible_connection: winrm
+ansible_winrm_transport: basic # CredSSP and NTLM do not work with FIPS on RHEL
+ansible_winrm_scheme: https
+ansible_port: 5986
+ansible_winrm_server_cert_validation: ignore

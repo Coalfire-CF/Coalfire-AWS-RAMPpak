@@ -1,0 +1,4 @@
+---
+
+- name: "SECTION | 2.x"
+  import_tasks: cis_2.x.yml

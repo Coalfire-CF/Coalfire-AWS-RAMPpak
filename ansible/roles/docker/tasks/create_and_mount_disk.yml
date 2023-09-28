@@ -1,0 +1,48 @@
+- name: Identify a Free Disk with no logical volumes
+  ansible.builtin.set_fact:
+    free_disk: "{{ item['key'] }}"
+  with_items:
+    - "{{ ansible_devices | dict2items }}"
+  when:
+    - item['value']['model'] == "Amazon Elastic Block Store"
+    - item['value']['holders'] | length == 0
+    - item['value']['partitions'] | length == 0
+    - item['value']['links']['masters'] | length == 0
+
+- name: Install LVM2
+  ansible.builtin.package:
+    name: lvm2
+    state: present
+  become: true
+
+- name: Debug free_disk
+  ansible.builtin.debug:
+    var: free_disk
+
+- name: Create Volume Group
+  community.general.lvg:
+    vg: dockervg
+    pvs: "/dev/{{ free_disk }}"
+  become: true
+
+- name: Create lvol
+  community.general.lvol:
+    vg: dockervg
+    lv: docker-lv
+    size: 100%VG
+  become: true
+
+- name: Create xfs filesystem
+  community.general.filesystem:
+    fstype: xfs
+    dev: /dev/dockervg/docker-lv
+  become: true
+
+- name: Mount logical volume
+  ansible.posix.mount:
+    path: /var/lib/docker
+    src: /dev/mapper/dockervg-docker--lv
+    opts: defaults
+    fstype: xfs
+    state: mounted
+  become: true

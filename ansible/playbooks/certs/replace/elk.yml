@@ -1,0 +1,32 @@
+---
+- name: Generate elastic certs
+  ansible.builtin.import_playbook: ../elastic_gen_certs.yml
+
+- name: Import elastic Deployment playbook
+  ansible.builtin.import_playbook: ../../install/lin_elastic_install.yml
+
+- hosts:
+    - data
+    - ingest
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  tasks:
+    - name: Restart elasticsearch
+      ansible.builtin.service:
+        name: elasticsearch
+        state: restarted
+      become: true
+
+- hosts: kibanaserver
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  tasks:
+    - name: Restart kibana
+      ansible.builtin.service:
+        name: kibana
+        state: restarted
+      become: true

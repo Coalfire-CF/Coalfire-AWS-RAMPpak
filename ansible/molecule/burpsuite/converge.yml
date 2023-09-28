@@ -1,0 +1,7 @@
+---
+- name: burpsuite nodes
+  hosts: burpsuite
+  vars:
+    ansible_user: ansible
+  roles:
+    - role: burpsuite

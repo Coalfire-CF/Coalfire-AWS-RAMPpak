@@ -1,0 +1,35 @@
+---
+- name: 2 Set docker_config var
+  ansible.builtin.set_fact:
+    docker_config:
+      bridge: none
+      default-ulimits: # 2.8 Ensure the default ulimit is configured appropriately
+        nofile:
+          Hard: 65535
+          Name: nofile
+          Soft: 65535
+      log-level: info # 2.3 Ensure the logging level is set to 'info'
+      log-driver: json-file
+      log-opts:
+        max-size: 10m
+        max-file: '5'
+      icc: false # 2.2 Ensure network traffic is restricted between containers on the default bridge
+      iptables: true # 2.4 Ensure Docker is allowed to make changes to iptables
+      storage-driver: overlay2 # 2.6 Ensure aufs storage driver is not used
+      live-restore: true # 2.15 Ensure live restore is enabled
+      userland-proxy: false # 2.16 Ensure Userland Proxy is Disabled
+      max-concurrent-downloads: 10
+      experimental: false # 2.18 Ensure that experimental features are not implemented in production
+      insecure-registries: [] # 2.5 Ensure insecure registries are not used
+      no-new-privileges: true # 2.14 Ensure containers are restricted from acquiring new privileges
+      seccomp-profile: # 2.17 Ensure that a daemon-wide custom seccomp profile is applied if appropriate
+
+- name: 2 | PATCH | Docker daemon configuration
+  ansible.builtin.copy:
+    content: "{{ docker_config | to_json }}"
+    dest: /etc/docker/daemon.json
+    force: true
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart docker

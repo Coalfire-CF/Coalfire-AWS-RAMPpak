@@ -1,0 +1,43 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+      tags:
+        - always
+
+    - name: Override krb5.conf
+      ansible.builtin.copy:
+        content: |
+          [libdefaults]
+          default_realm = {{ ansible_domain | upper }}
+          [realms]
+          [domain_realm]
+        dest: /etc/krb5.conf
+        force: true
+        mode: preserve
+      become: true
+      when: ansible_facts['distribution'] == 'Ubuntu'
+      tags:
+        - always
+
+- hosts: dc1
+  gather_facts: false
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+  tasks:
+    - name: Wait for system to become reachable over WinRM
+      ansible.builtin.wait_for_connection:
+        timeout: 180
+      tags:
+        - always
+
+- hosts: dc1
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+  roles:
+    - primary_domain_controller

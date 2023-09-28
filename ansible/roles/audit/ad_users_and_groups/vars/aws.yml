@@ -1,0 +1,9 @@
+---
+# Common
+aws_region: "{{ lookup('ansible.builtin.env', 'AWS_REGION') }}"
+is_gov: "{{ lookup('ansible.builtin.env', 'IS_GOV') | bool }}"
+ssm_fips_endpoint: "{% if is_gov %}ssm{% else %}ssm-fips{% endif %}"
+ssm_endpoint: "{{ 'https://' + ssm_fips_endpoint + '.' + aws_region + '.amazonaws.com' }}"
+
+audit_bucket_name: "{{ lookup('amazon.aws.aws_ssm', '/production/' + 'audit_bucket_name', endpoint=ssm_endpoint) }}"
+s3_key_id: "{{ lookup('amazon.aws.aws_ssm', '/production/' + 's3_key_id', endpoint=ssm_endpoint) }}"

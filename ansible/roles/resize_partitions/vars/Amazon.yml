@@ -1,0 +1,44 @@
+directories:
+  home:
+    path: /home
+    lv: home-lv
+    fstab_entry: home--lv
+    size: 10%VG
+    opts: defaults,nofail,nodev
+  varlogaudit:
+    path: /var/log/audit
+    lv: varlogaudit-lv
+    fstab_entry: varlogaudit--lv
+    size: 10%VG
+    opts: defaults,nofail,nodev
+  varlog:
+    path: /var/log
+    lv: varlog-lv
+    fstab_entry: varlog--lv
+    size: 20%VG
+    opts: defaults,nofail,nodev
+  vartmp:
+    path: /var/tmp
+    lv: vartmp-lv
+    fstab_entry: vartmp--lv
+    size: 10%VG
+    opts: defaults,nodev
+  var:
+    path: /var
+    lv: var-lv
+    fstab_entry: var--lv
+    size: 30%VG
+    opts: defaults,nofail,nodev
+  tmp:
+    path: /tmp
+    lv: tmp-lv
+    fstab_entry: tmp--lv
+    size: 20%VG
+    opts: defaults,nodev
+
+services:
+  - rsyslog
+  - crond
+  - irqbalance
+  - polkit
+  - chronyd

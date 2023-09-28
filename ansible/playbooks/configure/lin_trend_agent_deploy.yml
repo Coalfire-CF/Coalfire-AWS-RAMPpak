@@ -1,0 +1,17 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/common.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: linux:!trenddsm
+  gather_facts: true
+  strategy: free
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - role: trenddsm/linux_trend_agent_deploy

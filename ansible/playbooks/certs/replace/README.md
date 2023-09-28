@@ -1,0 +1,6 @@
+# Certificate Replacement Playbooks
+These are plays intended to replace the TLS certificates of each application.  Some applications have very specific procedures to replace the certificates (Trend DSM requires FIPS to be disabled, the certs replaced, and then FIPS enabled again).  Other applications like Splunk or ELK are more complex, so new certificates are generated and then the role to initially install the application is called entirely.  Because of that, Splunk and ELK roles at least are tested that they are idempotent and don't cause obvious adverse effects when applied again.
+
+The general replacement workflow is to run the replacement playbooks in Ansible to generate new certs and replace them in the application, then apply the respective Terraform module again to replace the certificates on AWS Application Load Balancer.
+
+Testing involves checking the web application login to ensure the certificate thumbprint has changed, that I can login, and the certificate is trusted.  This check is done once on the web server directly (e.g. https://dsm1.local.fastramp.internal:4119/), and then again on the load balancer (e.g. https://dsm.local.fastramp.internal:4119/)

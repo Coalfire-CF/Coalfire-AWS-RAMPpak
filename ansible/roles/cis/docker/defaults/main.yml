@@ -1,0 +1,40 @@
+### Section 1 Host Configuration
+
+### Section 2 Docker daemon configuration
+
+# 2.1 Run the Docker daemon as a non-root user, if possible
+# https://github.com/aws/containers-roadmap/issues/1059
+# Rootless docker does not appear to be supported
+
+# 2.7 Ensure TLS authentication for Docker daemon is configured
+# [not scored] - does not apply because the docker daemon is not exposed outside of the host
+
+# 2.9 Enable user namespace support
+# Rootless docker not supported on ECS
+
+# 2.12 Ensure that authorization for Docker client commands is enabled
+# [not scored] - does not apply because the docker daemon is not exposed outside of the host
+
+# 2.13 Ensure centralized and remote logging is configured
+# Not applicable since logs should be picked up by SIEM agent
+
+### Section 3 Docker daemon configuration files
+# 3.9 Ensure that TLS CA certificate file ownership is set to root:root
+# 3.10 Ensure that TLS CA certificate file permissions are set to 444 or more restrictively
+# 3.11 Ensure that Docker server certificate file ownership is set to root:root
+# 3.12 Ensure that the Docker server certificate file permissions are set to 444 or more restrictively
+# 3.13 Ensure that the Docker server certificate key file ownership is set to root:root
+# 3.14 Ensure that the Docker server certificate key file permissions are set to 400
+# [not scored] - does not apply because the docker daemon is not exposed outside of the host
+
+### Section 4 Container Images and Build File Configuration
+# Not applicable to Packer build
+
+### Section 5 Container Runtime Configuration
+# Not applicable to Packer build
+
+### Section 6 Docker Security Operations
+# Not applicable to Packer build
+
+### Section 7 Docker Swarm Configuration
+# Not using Docker Swarm

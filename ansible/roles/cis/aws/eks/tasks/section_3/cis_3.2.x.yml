@@ -1,0 +1,58 @@
+---
+- name: 3.2 Set kubelet_config var
+  ansible.builtin.set_fact:
+    kubelet_config:
+      kind: KubeletConfiguration
+      apiVersion: kubelet.config.k8s.io/v1beta1
+      address: 0.0.0.0
+      authentication:
+        anonymous:
+          enabled: false # 3.2.1 Ensure that the Anonymous Auth is Not Enabled
+        webhook:
+          cacheTTL: 2m0s
+          enabled: true # 3.2.2 Ensure that the --authorization-mode argument is not set to AlwaysAllow
+        x509:
+          clientCAFile: "/etc/kubernetes/pki/ca.crt" # 3.2.3 Ensure that a Client CA File is Configured
+      authorization:
+        mode: Webhook # 3.2.2 Ensure that the --authorization-mode argument is not set to AlwaysAllow
+        webhook:
+          cacheAuthorizedTTL: 5m0s
+          cacheUnauthorizedTTL: 30s
+      clusterDomain: cluster.local
+      hairpinMode: hairpin-veth
+      readOnlyPort: 0 # 3.2.4 Ensure that the --read-only-port is disabled
+      cgroupDriver: cgroupfs
+      cgroupRoot: "/"
+      featureGates:
+        RotateKubeletServerCertificate: true # 3.2.10 Ensure that the RotateKubeletServerCertificate argument is set to true
+      protectKernelDefaults: true
+      serializeImagePulls: false
+      serverTLSBootstrap: true
+      streamingConnectionIdleTimeout: 4h0m0s # 3.2.5 Ensure that the --streaming-connection-idle-timeout argument is not set to 0
+      makeIPTablesUtilChains: true # 3.2.6 Ensure that the --make-iptables-util-chains argument is set to true
+      eventRecordQPS: 50 # 3.2.8 Ensure that the --eventRecordQPS argument is set to 0 or a level which ensures appropriate event capture
+      RotateCertificate: true # 3.2.9 Ensure that the --rotate-certificates argument is not present or is set to true
+      tlsCipherSuites:
+      - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      - TLS_RSA_WITH_AES_256_GCM_SHA384
+      - TLS_RSA_WITH_AES_128_GCM_SHA256
+
+- name: 3.2 | PATCH | Template Kubelet Config
+  ansible.builtin.copy:
+    content: "{{ kubelet_config | to_json }}"
+    dest: /etc/kubernetes/kubelet/kubelet-config.json
+    force: true
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: 3.2.7 | PATCH | Ensure that the --hostname-override argument is not set
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
+    state: absent
+    regexp: '--hostname-override'

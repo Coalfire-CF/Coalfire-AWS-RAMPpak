@@ -1,0 +1,10 @@
+# Last Modified: Mon Aug 24 20:03:44 2020
+#include <tunables/global>
+
+/usr/bin/ssh {
+  #include <abstractions/base>
+
+  /lib/x86_64-linux-gnu/ld-*.so mr,
+  /usr/bin/ssh mr,
+
+}

@@ -1,0 +1,1 @@
+amazon2cis_rule_5_3_20: false # Coalfire Edit: Needed on linux bastion to forward SSH connection to ansible1

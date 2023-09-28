@@ -1,0 +1,71 @@
+- name: RHEL tasks
+  when: ansible_facts['distribution'] == 'RedHat'
+  block:
+    - name: Import Docker GPG Key
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://download.docker.com/linux/centos/gpg
+      become: true
+
+    - name: Add repository
+      ansible.builtin.yum_repository:
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        baseurl: "{{ item.baseurl }}"
+        gpgcheck: true
+        enabled: false
+        gpgkey: https://download.docker.com/linux/centos/gpg
+      become: true
+      loop:
+        - { name: 'docker-ce-stable', description: 'Docker CE Stable - $basearch', baseurl: 'https://download.docker.com/linux/centos/$releasever/$basearch/stable' }
+
+    - name: Install deps
+      ansible.builtin.yum:
+        name:
+          - libcgroup
+          - container-selinux
+          - slirp4netns
+          - fuse-overlayfs
+          - iptables
+        state: present
+      become: true
+
+    - name: Remove conflicts
+      ansible.builtin.yum:
+        name:
+          - podman
+          - buildah
+        state: absent
+      become: true
+
+    - name: Install Docker
+      ansible.builtin.yum:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        enablerepo: docker-ce-stable
+        disablerepo:
+          - ansible-2-for-rhel-8-rhui-rpms
+          - rhel-8-baseos-rhui-rpms
+          - rhui-client-config-server-8
+          - rhel-8-appstream-rhui-rpms
+      become: true
+  # End RHEL tasks
+
+- name: Enable service docker
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: restarted
+  become: true
+
+- name: Enable service containerd
+  ansible.builtin.systemd:
+    name: containerd
+    enabled: true
+    state: started
+  become: true

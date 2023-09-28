@@ -1,0 +1,40 @@
+---
+
+- name: "4.2.3 | PATCH | Ensure logrotate is configured"
+  block:
+      - name: "4.2.3 | AUDIT | Ensure logrotate is configured"
+        find:
+            paths: /etc/logrotate.d/
+        register: amazon2cis_4_2_3_log_rotates
+
+      - name: "4.2.3 | PATCH | Ensure logrotate is configured"
+        replace:
+            path: "{{ item.path }}"
+            regexp: '^(\s*)(daily|weekly|monthly|yearly)$'
+            replace: "\\1{{ amazon2cis_logrotate }}"
+        with_items:
+            - "{{ amazon2cis_4_2_3_log_rotates.files }}"
+            - { path: "/etc/logrotate.conf" }
+        loop_control:
+            label: "{{ item.path }}"
+  when:
+      - amazon2cis_rule_4_2_3
+  tags:
+      - level1
+      - manual
+      - patch
+      - rule_4.2.3
+      - logrotate
+
+- name: "4.2.4 | PATCH | Ensure permissions on all logfiles are configured"
+  command: find /var/log -type f -exec chmod g-wx,o-rwx "{}" + -o -type d -exec chmod g-wx,o-rwx "{}" +
+  changed_when: false
+  failed_when: false
+  when:
+      - amazon2cis_rule_4_2_4
+  tags:
+      - level1
+      - manual
+      - patch
+      - rule_4.2.4
+      - logs

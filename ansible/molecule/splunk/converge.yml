@@ -1,0 +1,201 @@
+---
+- &splunk_defaults
+  hosts: splunk
+  vars:
+    is_container: true
+    ansible_user: ansible
+    pass_4_symm_key: 'Sup3rS3cr3t!1'
+    ssl_password: 'Sup3rS3cr3t!'
+    user_password: 'Sup3rS3cr3t!3'
+    splunk_license_group: Trial
+    splunk_uri_lm: "https://splunkds1:8089"
+    splunk_uri_cm: "https://splunkcm1:8089"
+    splunk_uri_ds: "https://splunkds1:8089"
+
+    rootca_cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIE+jCCAuKgAwIBAgIUdu32A6DIzhP6tluW0UJjuV4VqBowDQYJKoZIhvcNAQEL
+      BQAwFTETMBEGA1UEAwwKQW5zaWJsZSBDQTAeFw0yMzAxMDMyMDUwNDFaFw0zMjEy
+      MzEyMDUwNDFaMBUxEzARBgNVBAMMCkFuc2libGUgQ0EwggIiMA0GCSqGSIb3DQEB
+      AQUAA4ICDwAwggIKAoICAQCrMoc5r1XM4kFI5ozu/B7+MmJ1tWRPIXhhrqBs4C+z
+      7RoBoQ1vVOs8CGp9m5pmzj8MupF4JxJSywQRRVtVaLywsTXUhd3zdpenLcA/e5it
+      qm0U5JHYwkyMtrYPx3dHhYbudXy36kpN+5MlMj4l1eN/RR0k4CgJArLQR2zmidkl
+      oH9gSqmoQJwlE6ZR2ECzrQN2lstc+72m8DHrVpXaALDTJZm3hi9LWRoqiYWGFGCi
+      7x403E8ng1vqgyGA4l06BveQD+1y21qVVxy8yt9wMA9OW693VORq+50FMOdj7ueS
+      CjpMa9qyIUg3H2pQvC0RhS6s+fs9yzdaTBDszfYfSxSZmCSgTX+u7n/P9cQUxGVx
+      FT+69k5t1Wzg9jYUArnrRrU9nr9TjjFp35SXawlG6szBGNuD/I6fxZ8fOMmROx+d
+      oAAhEJTjhp/RRoH3ZZIo9QirmEbhSFFRV/eplFygb4vhEzNBgGXJBal9tuJ/deH0
+      pCPWszVgvKUEWYvJxFd5ASjg3Iev0GMOTN9oAtCVbXorJtKFNCLA9E9s/tCqq6Zh
+      pO/2eJAEvENuj+Dz6HdQ8ls1oYW9qlWOrJ+HzVzJoY7VXAxVU1xjf2gkJr91gk+g
+      /rwqeDnTI0qldkAVnKbZfgFQk7t6tm1UWK6DfSZmMnIiollxguxq6oy0gg8yGLIG
+      pQIDAQABo0IwQDAOBgNVHQ8BAf8EBAMCAgQwDwYDVR0TAQH/BAUwAwEB/zAdBgNV
+      HQ4EFgQUU+wjlYScqRhvgSxnegh9tn9V7lYwDQYJKoZIhvcNAQELBQADggIBAAjr
+      tHOcBRihM7WnZLSGppY+I8dP9ruaFjJ+8rUv8XwLTOx3d61acCtVMzenieaSvql6
+      P/KprZg6GkpN8cWqu/nc43sgK/bUeIyCkhJfvoLjPmIYc1ITIAhSNf3JfQ1pTeaV
+      br+Xo5ISISxThTY4Gn2AQDfAj1s9Jja4v3b4OfXCsg349TENF81PnTzJA4Ikv/kg
+      ZMvvLUEt0mSgCSDubVK/2PgVKJFjXELIUscsi1ijpjCojbKFrB101YEYkop+WMS7
+      1ojlufwbMgIqr7STCBjVhczq3G6gC8kSawXgIc3XxV9sey/VN28GkruDAL/cP9Ui
+      oMLQ0jzUBp3utDSzqcP07BnwK6/6kNGjL5MRetXsMXVmkENvlPbojLBK6JSD0665
+      jO0f6tRx+I1PjAYjbkIOwmbSGOvzX1Zx/Kqj2GY8MAXVENnehUD6q7CgHklHjkfz
+      9E3Ml6qmOmC2TF/UBfIwXQbxSPzJOP5Yf/WRWdtp3AZ/dgb1K8AmiFap+qtZOJaq
+      DLaAAvorxyPT6CX4Arym5EqjRHWEnvqsIU+t/WkgIjHFTyfayLsksbSXviuXXwBl
+      gJLQXZcpnqNJyJVR3/S/ABgNs2wwgE9KQuSFwKr8+GRl1QIRJGAAZbk3eDYWfTAa
+      oezAeMCgKuA5XCA3XON5u7jnswIVNlO9IGdgbYmp
+      -----END CERTIFICATE-----
+
+    splunk_cert_key: |
+      -----BEGIN ENCRYPTED PRIVATE KEY-----
+      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
+      -----END ENCRYPTED PRIVATE KEY-----
+
+    splunk_cert_key_unenc: |
+      -----BEGIN PRIVATE KEY-----
+      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
+      z3YdCYqjgujKP8PONoAu2VJ1epCkyg==
+      -----END PRIVATE KEY-----
+
+    splunk_cert: |
+      -----BEGIN CERTIFICATE-----
+      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
+      EELMww==
+      -----END CERTIFICATE-----
+
+    splunkclient_cert: "{{ splunk_cert }}"
+    splunkclient_cert_key: "{{ splunk_cert_key }}"
+    splunkclient_cert_key_unenc: "{{ splunk_cert_key_unenc }}"
+
+  roles:
+    - role: splunk/splunk_install
+
+- <<: *splunk_defaults
+  hosts: splunk
+  roles:
+    - role: splunk/splunk_apps

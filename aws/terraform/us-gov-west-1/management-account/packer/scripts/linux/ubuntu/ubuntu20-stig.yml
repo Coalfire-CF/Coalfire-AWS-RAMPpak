@@ -1,0 +1,11 @@
+---
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  vars:
+    ubtu_20_010016: false # Coalfire Edit: Seems to cause boot failures in resulting AMI if enabled during Packer build
+    ubtu_20_010013: false # Coalfire Edit: Causes xrdp login failure for Burpsuite instance
+  roles:
+    - ubuntu20

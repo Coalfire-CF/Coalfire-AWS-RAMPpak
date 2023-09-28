@@ -1,0 +1,5 @@
+---
+# tasks file for EKS-CIS
+
+- name: run Section 3 tasks
+  import_tasks: section_3/main.yml

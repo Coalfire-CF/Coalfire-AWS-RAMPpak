@@ -1,0 +1,48 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: dc1
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+  tasks:
+    - name: Add svc_uat_priv to TrendAdmins
+      microsoft.ad.group:
+        name: TrendAdmins
+        members:
+          - svc_uat_priv
+        state: present
+      notify: pause
+  handlers:
+    - name: pause
+      ansible.builtin.pause:
+        minutes: 1
+
+# https://help.deepsecurity.trendmicro.com/10/0/Manage-Components/ports.html
+- hosts: trenddsm
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 4118 # 4118/HTTPS* (Deep Security Agent port)
+      - 4119 # 4119/HTTPS (Deep Security Manager GUI and API listen port)
+      - 4120 # 4120/HTTPS (Deep Security Manager heartbeat and activation port)
+      - 4122 # 4122/HTTPS* (Deep Security Relay port)
+    service_names:
+      - dsm_s
+  roles:
+    - tests/linux_app
+
+- hosts: trenddsm
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - tests/trenddsm

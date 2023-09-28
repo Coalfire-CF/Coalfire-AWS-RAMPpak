@@ -1,0 +1,13 @@
+---
+
+- name: "SECTION | 2.1.1 | Time Synchronization"
+  include_tasks: cis_2.1.1.x.yml
+
+- name: "SECTION | 2.1 | Special Purpose Services"
+  include_tasks: cis_2.1.x.yml
+
+- name: "SECTION | 2.2 | Service Clients"
+  include_tasks: cis_2.2.x.yml
+
+- name: "SECTION | 2.3 | Nonessential Services"
+  include_tasks: cis_2.3.yml

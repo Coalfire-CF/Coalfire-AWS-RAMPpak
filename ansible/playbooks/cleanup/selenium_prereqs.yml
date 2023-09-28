@@ -1,0 +1,43 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Remove Packages for RHEL
+      when: hostvars['ansible1']['ansible_facts']['os_family'] == 'RedHat'
+      block:
+        - name: Install required packages on Ansible host
+          ansible.builtin.package:
+            name:
+              - xorg-x11-server-Xvfb
+              - google-chrome-stable
+            state: absent
+          become: true
+
+        - name: Remove Python Packages on Ansible host
+          ansible.builtin.pip:
+            name:
+              - selenium
+              - webdriver-manager
+              - distro
+            state: absent
+
+    - name: Remove Packages for Ubuntu
+      when: hostvars['ansible1']['ansible_facts']['distribution'] == 'Ubuntu'
+      vars:
+        ansible_python_interpreter: /usr/bin/python3.9
+      block:
+        - name: Remove required packages on Ansible host
+          ansible.builtin.package:
+            name:
+              - xvfb
+              - google-chrome-stable
+            state: absent
+          become: true
+
+        - name: Remove Python Packages on Ansible host
+          ansible.builtin.pip:
+            name:
+              - selenium
+              - webdriver-manager
+              - distro
+            state: absent

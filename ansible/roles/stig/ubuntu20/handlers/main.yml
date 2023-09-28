@@ -1,0 +1,73 @@
+---
+
+- name: update grub
+  command: update-grub
+  when:
+      - not ubtu20stig_skip_for_travis
+      - not ubtu20stig_system_is_container
+
+- name: reload gdm
+  command: dpkg-reconfigure gdm3
+
+- name: dconf update
+  command: dconf update
+  when:
+      - ubtu20stig_desktop_required
+
+- name: restart sshd
+  service:
+      name: sshd
+      state: restarted
+  when:
+      - "'openssh-server' in ansible_facts.packages"
+
+- name: restart chrony
+  service:
+      name: chrony
+      state: restarted
+
+- name: auditd_immutable_check
+  shell: grep -c "^-e 2" /etc/audit/rules.d/99_auditd.rules
+  changed_when: false
+  register: auditd_immutable_check
+
+- name: audit_immutable_fact
+  debug:
+      msg: "Reboot required for auditd to apply new rules as immutable set"
+  notify: change_requires_reboot
+  when:
+      - auditd_immutable_check.stdout == '1'
+
+- name: reload kernel system
+  shell: sysctl --system
+
+- name: update auditd
+  template:
+      src: audit/99_stig_auditd.rules.j2
+      dest: /etc/audit/rules.d/99_stig_audit.rules
+      owner: root
+      group: root
+      mode: 0640
+  notify:
+      - reload auditd
+      - restart auditd
+
+- name: reload auditd
+  shell: augenrules --load
+
+- name: restart auditd
+  service:
+      name: auditd
+      state: restarted
+
+- name: restart rsyslog
+  service:
+      name: rsyslog
+      state: restarted
+
+- name: sysctl flush ipv4 route table
+  sysctl:
+      name: net.ipv4.route.flush
+      value: '1'
+      sysctl_set: true
+  when: ansible_virtualization_type != "docker"

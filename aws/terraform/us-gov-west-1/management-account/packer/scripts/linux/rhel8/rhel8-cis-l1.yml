@@ -1,0 +1,28 @@
+---
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  roles:
+    - rhel8
+
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  tasks:
+    # A recent change to the RHEL base AMI (around 02/2023) causes the SSH keys (deleted during cleanup steps) to not be regenerated during next cloud-init boot
+    # This causes the SSHD service to fail to start.  These lines in the file should cause the keys to be regenerated as they need to be.
+    # https://bugs.launchpad.net/cloud-init/+bug/1995609
+    - name: Set Cloud init SSH params
+      ansible.builtin.lineinfile:
+        path: /etc/cloud/cloud.cfg
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^ssh_deletekeys:', line: 'ssh_deletekeys:  true' }
+        - { regexp: '^ssh_genkeytypes:', line: "ssh_genkeytypes:  ['rsa']" }
+      tags:
+        - always

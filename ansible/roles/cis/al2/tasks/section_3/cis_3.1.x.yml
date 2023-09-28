@@ -1,0 +1,54 @@
+---
+
+- name: "3.1.1 | PATCH | Disable IPv6"
+  sysctl:
+      name: "{{ item }}"
+      value: '1'
+      reload: true
+      state: present
+  loop:
+      - net.ipv6.conf.all.disable_ipv6
+      - net.ipv6.conf.default.disable_ipv6
+  when:
+      - not amazon2cis_ipv6_required
+      - amazon2cis_rule_3_1_1
+  notify: sysctl flush ipv6 route table
+  tags:
+      - level2
+      - manual
+      - patch
+      - rule_3.1.1
+      - ipv6
+
+- name: "3.1.2 | PATCH | Ensure wireless interfaces are disabled"
+  block:
+      - name: "3.1.2 | AUDIT | Ensure wireless interfaces are disabled | Check if nmcli command is available"
+        command: rpm -q NetworkManager
+        changed_when: false
+        failed_when: false
+        check_mode: false
+        register: amazon2_3_1_2_nmcli_available
+        args:
+            warn: false
+
+      - name: "3.1.2 | AUDIT | Ensure wireless interfaces are disabled | Check if wifi is enabled"
+        command: nmcli radio wifi
+        changed_when: false
+        failed_when: false
+        check_mode: false
+        register: amazon2_3_2_1_wifi_enabled
+        when: amazon2_3_1_2_nmcli_available.rc == 0
+
+      - name: "3.1.2 | PATCH | Ensure wireless interfaces are disabled | Disable wifi if enabled"
+        command: nmcli radio wifi off
+        when:
+            - amazon2_3_2_1_wifi_enabled.stdout is defined
+            - "'enabled' in amazon2_3_2_1_wifi_enabled.stdout"
+  when:
+      - amazon2cis_rule_3_1_2
+  tags:
+      - level1
+      - automated
+      - patch
+      - rule_3.1.2
+      - wireless

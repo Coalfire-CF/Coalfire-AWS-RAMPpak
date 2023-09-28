@@ -1,0 +1,65 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: dc1
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+  tasks:
+    - name: Add svc_uat_priv to SplunkAdmins
+      microsoft.ad.group:
+        name: SplunkAdmins
+        members:
+          - svc_uat_priv
+        state: present
+      notify: pause
+  handlers:
+    - name: pause
+      ansible.builtin.pause:
+        minutes: 1
+
+- hosts: splunk:!indexer
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 8000 # Splunk Web
+  roles:
+    - tests/linux_app
+
+- hosts: splunk
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 8089 # Splunkd
+    service_names:
+      - Splunkd
+  roles:
+    - tests/linux_app
+
+- hosts: indexer
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    service_ports:
+      - 9998 # Input port
+      - 8080 # Replication port
+  roles:
+    - tests/linux_app
+
+- hosts: splunk
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - tests/splunk

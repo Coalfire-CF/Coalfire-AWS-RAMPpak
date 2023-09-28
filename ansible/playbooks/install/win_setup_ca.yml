@@ -1,0 +1,76 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: ca1
+  gather_facts: false
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  tasks:
+    - name: Dig until DNS resolves
+      ansible.builtin.command: "dig {{ inventory_hostname }}.{{ hostvars['ansible1']['ansible_domain'] }} +short"
+      register: dig_result
+      until: dig_result.stdout | length > 0
+      delegate_to: localhost
+      retries: 60
+      delay: 10
+      changed_when: false
+
+    - name: Wait for system to become reachable over WinRM
+      ansible.builtin.wait_for_connection:
+        timeout: 180
+
+- hosts: ca1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - enterprise_certificate_authority
+
+- hosts: ansible1
+  connection: local
+  handlers:
+    - name: rhel update ca trust
+      ansible.builtin.command: update-ca-trust
+      register: update_ca_trust
+      changed_when: update_ca_trust.rc == 0
+      become: true
+
+    - name: ubuntu update ca trust
+      ansible.builtin.command: update-ca-certificates
+      register: update_ca_trust
+      changed_when: update_ca_trust.rc == 0
+      become: true
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/ca_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+    - name: RHEL - Install Root CA file on Ansible Host
+      when:
+        - ansible_facts['os_family'] == 'RedHat'
+      block:
+        - name: RHEL - Copy Root CA file
+          ansible.builtin.copy:
+            content: "{{ rootca_cert }}"
+            dest: /etc/pki/ca-trust/source/anchors/cacert.pem
+            mode: '0644'
+          become: true
+          notify: rhel update ca trust
+
+    - name: Ubuntu - Install Root CA file on Ansible Host
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+      block:
+        - name: Ubuntu - Copy Root CA file
+          ansible.builtin.copy:
+            content: "{{ rootca_cert }}"
+            dest: /usr/local/share/ca-certificates/cacert.crt
+            mode: '0644'
+          become: true
+          notify: ubuntu update ca trust

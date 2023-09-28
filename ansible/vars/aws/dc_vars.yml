@@ -1,0 +1,10 @@
+---
+aws_region: "{{ lookup('ansible.builtin.env', 'AWS_REGION') }}"
+is_gov: "{{ lookup('ansible.builtin.env', 'IS_GOV') | bool }}"
+ssm_fips_endpoint: "{% if is_gov %}ssm{% else %}ssm-fips{% endif %}"
+ssm_endpoint: "{{ 'https://' + ssm_fips_endpoint + '.' + aws_region + '.amazonaws.com' }}"
+ad_secrets_path: "{{ lookup('amazon.aws.aws_ssm', '/production/ad_secrets_path', endpoint=ssm_endpoint) }}"
+svc_ansible_password: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'svc_ansible', endpoint=ssm_endpoint) }}"
+svc_ansible_da_password: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'svc_ansible_da', endpoint=ssm_endpoint) }}"
+
+dom_disname: "{{ lookup('amazon.aws.aws_ssm', ad_secrets_path + 'dom_disname', endpoint=ssm_endpoint) }}"

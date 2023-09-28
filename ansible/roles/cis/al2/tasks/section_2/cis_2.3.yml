@@ -1,0 +1,12 @@
+---
+
+- name: "2.3 | audit | Ensure nonessential services are removed or masked"
+  debug:
+      msg: "<----- not required"
+  when:
+      - amazon2cis_rule_2_3
+  tags:
+      - level1
+      - manual
+      - audit
+      - rule_2.3

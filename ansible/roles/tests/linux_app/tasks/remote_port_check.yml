@@ -1,0 +1,9 @@
+- name: Delegate to Ansible host
+  delegate_to: localhost
+  block:
+    - name: Check Remote ports
+      ansible.builtin.wait_for:
+        host: "{{ inventory_hostname }}"
+        port: "{{ item }}"
+        timeout: 5
+      loop: "{{ service_ports }}"

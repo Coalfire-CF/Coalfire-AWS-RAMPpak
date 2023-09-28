@@ -1,0 +1,144 @@
+---
+# Preliminary tasks that should always be run
+# List users in order to look files inside each home directory
+- name: "PRELIM | List users accounts"
+  command: "awk -F: '{print $1}' /etc/passwd"
+  args:
+      warn: false
+  changed_when: false
+  check_mode: false
+  register: users
+
+- name: "PRELIM | Gather interactive user ID min and max"
+  block:
+      - name: "PRELIM | Gather interactive user ID min"
+        shell: grep ^UID_MIN /etc/login.defs | awk '{print $2}'
+        changed_when: false
+        failed_when: false
+        register: rhel8cis_min_uid
+
+      - name: "PRELIM | Gather interactive user ID max"
+        shell: grep ^UID_MAX /etc/login.defs | awk '{print $2}'
+        changed_when: false
+        failed_when: false
+        register: rhel8cis_max_uid
+
+      - name: "PRELIM | Setting the fact"
+        set_fact:
+            rhel8uid_interactive_uid_start: "{{ rhel8cis_min_uid.stdout | string }}"
+            rhel8uid_interactive_uid_stop: "{{ rhel8cis_max_uid.stdout | string }}"
+  when:
+      - rhel8uid_info_dynamic
+
+- name: "PRELIM | Gather accounts with empty password fields"
+  shell: "cat /etc/shadow | awk -F: '($2 == \"\" ) {j++;print $1; } END {exit j}'"
+  args:
+      warn: false
+  changed_when: false
+  check_mode: false
+  register: empty_password_accounts
+
+- name: "PRELIM | Gather UID 0 accounts other than root"
+  shell: "cat /etc/passwd | awk -F: '($3 == 0 && $1 != \"root\") {i++;print $1 } END {exit i}'"
+  args:
+      warn: false
+  changed_when: false
+  check_mode: false
+  register: rhel8cis_uid_zero_accounts_except_root
+
+- name: "PRELIM | Gather system-wide crypto-policy"
+  shell: update-crypto-policies --show
+  args:
+      warn: false
+  changed_when: false
+  check_mode: false
+  register: system_wide_crypto_policy
+
+- name: "PRELIM | if systemd coredump"
+  stat:
+      path: /etc/systemd/coredump.conf
+  register: systemd_coredump
+
+- name: "PRELIM | Section 1.1 | Create list of mount points"
+  set_fact:
+      mount_names: "{{ ansible_mounts | map(attribute='mount') | list }}"
+
+- name: "PRELIM | Install dconf"
+  package:
+      name: dconf
+      state: present
+  when:
+      - "'gdm' in ansible_facts.packages"
+      - "'dconf' not in ansible_facts.packages"
+      - rhel8cis_rule_1_8_2 or
+        rhel8cis_rule_1_8_3 or
+        rhel8cis_rule_1_8_5
+
+- name: "PRELIM | Section 4.1 | Configure System Accounting (auditd)"
+  package:
+      name: audit
+      state: present
+  when: rhel8cis_level_2
+
+- name: "PRELIM | Section 5.1 | Configure cron"
+  package:
+      name: cronie
+      state: present
+
+- name: "PRELIM | Find all sudoers files."
+  command: "find /etc/sudoers /etc/sudoers.d/ -type f ! -name '*~' ! -name '*.*'"
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  register: rhel8cis_sudoers_files
+  when:
+      - rhel8cis_rule_5_3_4 or
+        rhel8cis_rule_5_3_5
+
+- name: "PRELIM | Install authconfig"
+  package:
+      name: authconfig
+      state: present
+  when:
+      - rhel8cis_use_authconfig
+      - rhel8cis_rule_5_3_1 or
+        rhel8cis_rule_5_3_2 or
+        rhel8cis_rule_5_3_3
+
+- name: "PRELIM | Set facts based on boot type"
+  block:
+      - name: "PRELIM | Check whether machine is UEFI-based"
+        stat:
+            path: /sys/firmware/efi
+        register: rhel_08_efi_boot
+
+      - name: "PRELIM | AUDIT | set legacy boot and grub path | Bios"
+        set_fact:
+            rhel8cis_legacy_boot: true
+            grub2_path: /etc/grub2.cfg
+        when: not rhel_08_efi_boot.stat.exists
+
+      - name: "PRELIM | set grub fact | UEFI"
+        set_fact:
+            grub2_path: /etc/grub2-efi.cfg
+        when: rhel_08_efi_boot.stat.exists
+
+- name: "PRELIM | AUDIT | Ensure permissions on bootloader config are configured | Get grub config file stats"
+  stat:
+      path: "{{ grub2_path }}"
+  changed_when: false
+  register: grub_cfg
+
+# - name: debug grub stat
+#   debug:
+#       var: grub_cfg.stat
+
+- name: "PRELIM | Check for rhnsd service"
+  shell: "systemctl show rhnsd | grep LoadState | cut -d = -f 2"
+  changed_when: false
+  check_mode: false
+  register: rhnsd_service_status
+  when:
+      - rhel8cis_rule_1_2_2
+  tags:
+      - skip_ansible_lint

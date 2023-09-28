@@ -1,0 +1,33 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../../vars/aws/common.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: dc1
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+    ssm_parameter_store_key_id: "{{ lookup('amazon.aws.aws_ssm', '/production/ssm_parameter_store_key_id', endpoint=hostvars['ansible1']['ssm_endpoint']) }}"
+  tasks:
+    - name: Get VPNUsers SID
+      ansible.windows.win_powershell:
+        script: |
+          Import-Module -Name ActiveDirectory
+
+          $Ansible.Result = Get-ADGroup -Filter 'Name -eq "VPNUsers"' | Select-Object -ExpandProperty SID | Select-Object -ExpandProperty Value
+      register: vpnusers_sid
+      changed_when: false
+
+    - name: Add VPNUsers SID to AWS SSM Parameter Store
+      community.aws.ssm_parameter:
+        name: "{{ hostvars['ansible1']['ad_secrets_path'] }}vpnusers_sid"
+        state: present
+        string_type: "SecureString"
+        value: "{{ vpnusers_sid.result }}"
+        region: "{{ hostvars['ansible1']['aws_region'] }}"
+        key_id: "{{ ssm_parameter_store_key_id }}"
+        endpoint_url: "{{ hostvars['ansible1']['ssm_endpoint'] }}"
+      delegate_to: localhost

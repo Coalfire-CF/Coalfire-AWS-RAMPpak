@@ -1,0 +1,2 @@
+amazon2cis_rule_3_2_1: false # Kubernetes requires IPV4 forwarding on worker nodes
+ubtu20cis_rule_3_2_2: false ### Coalfire Edits: Kubernetes requires IPV4 forwarding on worker nodes

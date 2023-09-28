@@ -1,0 +1,28 @@
+---
+- name: "MANUAL | 2.3 | AUDIT | Ensure nonessential services are removed or masked"
+  block:
+      - name: "MANUAL | 2.3 | AUDIT | Ensure nonessential services are removed or masked | Get list of all services"
+        shell: lsof -i -P -n | grep -v "(ESTABLISHED)"
+        changed_when: false
+        failed_when: false
+        register: ubtu18cis_2_3_services
+
+      - name: "MANUAL | 2.3 | AUDIT | Ensure nonessential services are removed or masked | Display services"
+        debug:
+            msg:
+                - "Warning!! Below are the list of services. Please make sure all are required and remove any non-required services"
+                - "{{ ubtu18cis_2_3_services.stdout_lines }}"
+
+      - name: "MANUAL | 2.3 | AUDIT | Ensure nonessential services are removed or masked | Warn Count."
+        ansible.builtin.import_tasks: warning_facts.yml
+        vars:
+            warn_control_id: '2.3'
+  when:
+      - ubtu18cis_rule_2_3
+  tags:
+      - level1-server
+      - level1-workstation
+      - manual
+      - audit
+      - rule_2.3
+      - nonessential_services

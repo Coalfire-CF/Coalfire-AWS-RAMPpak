@@ -1,0 +1,67 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/dc_vars.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: dc2
+  gather_facts: false
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  tasks:
+    - name: Dig until DNS resolves
+      ansible.builtin.command: "dig {{ inventory_hostname }}.{{ hostvars['ansible1']['ansible_domain'] }} +short"
+      register: dig_result
+      until: dig_result.stdout | length > 0
+      delegate_to: localhost
+      retries: 60
+      delay: 10
+      changed_when: false
+
+    - name: Try non-domain admin
+      block:
+        - name: Wait for system to become reachable over WinRM
+          ansible.builtin.wait_for_connection:
+            timeout: 180
+      rescue:
+        - name: Set Domain Admin Credentials
+          ansible.builtin.set_fact:
+            ansible_user: "svc_ansible_da"
+            ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+
+        - name: Wait for system to become reachable over WinRM
+          ansible.builtin.wait_for_connection:
+            timeout: 180
+
+- hosts: dc2
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  tasks:
+    - name: Try non-domain admin
+      block:
+        - name: Include RDC role
+          ansible.builtin.include_role:
+            name: replica_domain_controller
+      rescue:
+        - name: Set Domain Admin Credentials
+          ansible.builtin.set_fact:
+            ansible_user: "svc_ansible_da"
+            ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+
+        - name: Include RDC role
+          ansible.builtin.include_role:
+            name: replica_domain_controller
+
+- hosts: dc2
+  vars:
+    ansible_user: "svc_ansible_da"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_da_password'] }}"
+  tasks:
+    - name: Include Authlite role
+      ansible.builtin.include_role:
+        name: authlite
+      when: install_authlite | bool

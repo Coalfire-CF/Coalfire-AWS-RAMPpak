@@ -1,0 +1,24 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../../vars/aws/gen_certs.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: ansible1
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    app_name: jira
+    instance_count: 2
+  roles:
+    - gen_tls_cert
+
+- hosts: jiraserver
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - certs_replace/jira

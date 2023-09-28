@@ -1,0 +1,30 @@
+---
+
+galaxy_info:
+    author: "Stephen Williams, George Nalen, Mark Bolwell"
+    description: "Apply the DISA Ubuntu 20 STIG"
+    company: "MindPoint Group"
+    license: MIT
+    role_name: ubuntu20_stig
+    namespace: mindpointgroup
+    min_ansible_version: 2.9.0
+    platforms:
+        - name: Ubuntu
+          versions:
+              - focal
+    galaxy_tags:
+        - system
+        - security
+        - stig
+        - hardening
+        - benchmark
+        - compliance
+        - ubuntu
+        - complianceascode
+        - disa
+        - ubuntu18
+collections:
+    - community.general
+    - community.crypto
+    - ansible.posix
+dependencies: []

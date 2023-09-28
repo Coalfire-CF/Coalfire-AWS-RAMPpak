@@ -1,0 +1,30 @@
+---
+
+- name: "SECTION | 1.1.1.x | Disable unused filesystems"
+  include_tasks: cis_1.1.1.x.yml
+
+- name: "SECTION | 1.1 | FileSystem Configuration"
+  include_tasks: cis_1.1.x.yml
+
+- name: "SECTION | 1.2 | Configure Software Updates"
+  include_tasks: cis_1.2.x.yml
+
+- name: "SECTION | 1.3 | Filesystem Integrity Checking"
+  include_tasks: cis_1.3.x.yml
+  when: amazon2cis_config_aide
+
+- name: "SECTION | 1.4 | Secure Boot Settings"
+  include_tasks: cis_1.4.x.yml
+
+- name: "SECTION | 1.5 | Additional Process Hardening"
+  include_tasks: cis_1.5.x.yml
+
+- name: "SECTION | 1.6 | Mandatory Access Control"
+  include_tasks: cis_1.6.x.yml
+  when: not amazon2cis_selinux_disable
+
+- name: "SECTION | 1.7 | Command Line Warning Banners"
+  include_tasks: cis_1.7.x.yml
+
+- name: "SECTION | 1.8 | Ensure updates, patches, and additional security software are installed"
+  include_tasks: cis_1.8.x.yml

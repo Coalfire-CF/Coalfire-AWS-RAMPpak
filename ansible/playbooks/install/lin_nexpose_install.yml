@@ -1,0 +1,36 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/common.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts:
+    - nexpose
+  gather_facts: false
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  tasks:
+    - name: Dig until DNS resolves
+      ansible.builtin.command: "dig {{ inventory_hostname }}.{{ hostvars['ansible1']['ansible_domain'] }} +short"
+      register: dig_result
+      until: dig_result.stdout | length > 0
+      delegate_to: localhost
+      retries: 60
+      delay: 10
+      changed_when: false
+
+    - name: Wait for system to become reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 180
+
+- hosts:
+    - nexpose
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - nexpose

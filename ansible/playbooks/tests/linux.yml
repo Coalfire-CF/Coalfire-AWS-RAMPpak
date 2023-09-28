@@ -1,0 +1,50 @@
+---
+- hosts: ansible1
+  connection: local
+  tasks:
+    - name: Load AWS vars
+      ansible.builtin.include_vars: ../../vars/aws/uat.yml
+      when: ansible_system_vendor == 'Amazon EC2'
+
+- hosts: linux
+  vars:
+    ansible_user: "svc_ansible"
+    ansible_password: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_ansible_password'] }}"
+  roles:
+    - tests/linux_common
+
+- hosts: linux
+  vars:
+    ansible_user: "svc_uat_priv"
+    ansible_password: "{{ hostvars['ansible1']['svc_uat_priv_password'] }}"
+    ansible_sudo_pass: "{{ hostvars['ansible1']['svc_uat_priv_password'] }}"
+  tasks:
+    - name: Test UAT Authorized Basic Ping
+      ansible.builtin.ping:
+
+    - name: Test UAT Authorized Sudo
+      ansible.builtin.command:
+        cmd: id
+      become: true
+      register: id_result
+      changed_when: false
+
+    - name: Show id_result
+      ansible.builtin.debug:
+        var: id_result.stdout
+
+# Tests unauthorized access, this SHOULD produce an unreachable error count of 1, which is normal and expected.
+# It may appear as an error or unexpected result, but I can't modify how Ansible presents the result without modifying the callback plugin
+- hosts: linux
+  gather_facts: false
+  vars:
+    ansible_user: "svc_uat_unpriv"
+    ansible_password: "{{ hostvars['ansible1']['svc_uat_unpriv_password'] }}"
+  tasks:
+    - name: Test UAT Unauthorized Basic Ping
+      ansible.builtin.ping:
+      register: ping_test
+      ignore_errors: true
+      ignore_unreachable: true
+      failed_when: ping_test.unreachable == false

@@ -1,0 +1,47 @@
+### RHEL Notes ###
+sudo dnf install -y git python3-pip
+pip install molecule ansible-lint
+ansible-galaxy collection install containers.podman
+pip install molecule[podman]
+
+# Command "/sbin/init" to run systemd
+# UBI9 url docker.io/redhat/ubi9:9.1.0
+
+# Elastic must have bootstrap.memory_lock: false in elasticsearch.yml
+# Unknown if needed (on docker host) sudo sysctl -w vm.max_map_count=262144
+
+dnf install podman-plugins
+
+# Bottom portion should not be needed if using Red Hat
+dnf install go-toolset
+dnf group install "Development Tools"
+git clone https://github.com/containers/dnsname
+cd dnsname
+make all
+make install PREFIX=/usr
+
+# Disable firewall
+
+
+### Ubuntu Notes (Must be 22.04 LTS or higher) ###
+UPDATE:  Don't bother with podman on Ubuntu, it only works on RHEL.  Just use docker without attempting to setup as rootless for simplicity.
+
+sudo apt install -y podman 
+
+### WSL Notes ###
+systemd is needed to mimic regular software installation.
+
+https://github.com/arkane-systems/genie
+
+If you see errors:
+https://github.com/arkane-systems/genie/wiki/Systemd-units-known-to-be-problematic-under-WSL
+
+What I had to fix:
+https://github.com/arkane-systems/genie/wiki/Systemd-units-known-to-be-problematic-under-WSL#systemd-remount-fsservice
+https://github.com/arkane-systems/genie/wiki/Systemd-units-known-to-be-problematic-under-WSL#systemd-sysusersservice
+
+For 2nd item, I created the new systemd service as "/etc/systemd/system/fixshm.service".  Delete the comments before enabling the service.
+
+After that, run "wsl genie -s" in Powershell to start the Ubuntu shell
+You MUST start a shell using "wsl genie -s" otherwise Ansible will fail to run, insisting that it doesn't have write access to /dev/shm.
+Within WSL2 > Ubuntu, run "sudo update-alternatives --set iptables /usr/sbin/iptables-legacy" otherwise podman will fail.

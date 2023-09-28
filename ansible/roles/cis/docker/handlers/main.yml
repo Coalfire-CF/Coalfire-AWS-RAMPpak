@@ -1,0 +1,10 @@
+- name: restart docker
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: docker
+
+- name: restart auditd
+  command: /sbin/service auditd restart
+  check_mode: false
+  failed_when: false

@@ -1,0 +1,6 @@
+---
+- name: Generate Burpsuite certs
+  ansible.builtin.import_playbook: ../burpsuite_gen_certs.yml
+
+- name: Import Burpsuite Deployment playbook
+  ansible.builtin.import_playbook: ../../install/lin_burpsuite_install.yml

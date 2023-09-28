@@ -1,0 +1,6 @@
+GroupName,FullName,SamAccountName
+{% for host in ansible_play_hosts %}
+{% for user in hostvars[host]['ad_users_and_groups']['result'] %}
+{{ user['GroupName'] }},{{ user['FullName'] }},{{ user['SamAccountName'] }}
+{% endfor %}
+{% endfor %}

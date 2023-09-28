@@ -1,0 +1,77 @@
+---
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: Disable SELinux
+      ansible.posix.selinux:
+        state: disabled
+      when: ansible_facts['distribution'] == 'RedHat'
+
+    # Note: This is purely for a clean AL2 AMI to prevent errors when using "cp" against an empty directory
+    - name: Ensure file in /var/tmp exists
+      ansible.builtin.file:
+        path: "/var/tmp/ansible_touch.txt"
+        state: touch
+      when: ansible_facts['distribution'] == 'Amazon'
+
+    # Note: This is purely for a clean Ubuntu 22.04 AMI to prevent errors when using "cp" against an empty directory
+    - name: Ensure /var/log/audit exists
+      ansible.builtin.file:
+        path: "/var/log/audit"
+        state: directory
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] == '22.04'
+
+    - name: Ensure file in /var/log/audit exists
+      ansible.builtin.file:
+        path: "/var/log/audit/ansible_touch.txt"
+        state: touch
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] == '22.04'
+
+    - name: Disable AppArmor
+      ansible.builtin.systemd:
+        state: stopped
+        name: apparmor
+        enabled: false
+      when: ansible_facts['distribution'] == 'Ubuntu'
+
+    - name: Disable DNS caching
+      ansible.builtin.lineinfile:
+        line: 'Cache=no'
+        regexp: '^#Cache=no-negative'
+        path: /etc/systemd/resolved.conf
+      when: ansible_facts['distribution'] == 'Ubuntu'
+
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  roles:
+    - partition_disk
+
+- hosts: 127.0.0.1
+  become: true
+  become_method: sudo
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: Ensure file in /var/tmp does not exist
+      ansible.builtin.file:
+        path: "/var/tmp/ansible_touch.txt"
+        state: absent
+      when: ansible_facts['distribution'] == 'Amazon'
+
+    - name: Ensure file in /var/log/audit does not exist
+      ansible.builtin.file:
+        path: "/var/log/audit/ansible_touch.txt"
+        state: absent
+      when:
+        - ansible_facts['distribution'] == 'Ubuntu'
+        - ansible_facts['distribution_version'] == '22.04'

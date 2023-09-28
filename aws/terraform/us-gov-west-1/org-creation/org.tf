@@ -13,7 +13,7 @@ module "org" {
   org_member_account_numbers = ["358745275192"]
   delegated_admin_account_id = "358745275192"
   delegated_service_principal = "principal"
-  enabled_policy_types = ["SERVICE_CONTROL_POLICY", "BACKUP_POLICY", "TAG_POLICY"]
+  #enabled_policy_types = ["SERVICE_CONTROL_POLICY", "BACKUP_POLICY", "TAG_POLICY"]
   service_access_principals = ["cloudtrail.amazonaws.com",
     "config.amazonaws.com",
     "securityhub.amazonaws.com",
@@ -21,53 +21,54 @@ module "org" {
     "config-multiaccountsetup.amazonaws.com"]
 }
 
-#
-#resource "aws_organizations_organizational_unit" "ou" {
-#  depends_on = [module.org-creation]
-#  name      = "app_ou"
-#  parent_id = module.org-creation.org_roots[0].id
-#}
-#
-#
-#resource "aws_organizations_resource_policy" "org_resource_policy" {
-#  content = <<EOF
-#{
-#  "Version": "2012-10-17",
-#  "Statement": [
-#    {
-#      "Sid": "Statement",
-#      "Effect": "Allow",
-#      "Principal": {
-#        "AWS": "arn:${data.aws_partition.current.partition}:iam::${module.org-creation.org_roots.id}:root"
-#      },
-#      "Action": [
-#        "organizations:CreatePolicy",
-#        "organizations:UpdatePolicy",
-#        "organizations:DeletePolicy",
-#        "organizations:AttachPolicy",
-#        "organizations:DetachPolicy",
-#        "organizations:EnablePolicyType",
-#        "organizations:DisablePolicyType",
-#        "organizations:DescribeOrganization",
-#        "organizations:DescribeOrganizationalUnit",
-#        "organizations:DescribeAccount",
-#        "organizations:DescribePolicy",
-#        "organizations:DescribeEffectivePolicy",
-#        "organizations:ListRoots",
-#        "organizations:ListOrganizationalUnitsForParent",
-#        "organizations:ListParents",
-#        "organizations:ListChildren",
-#        "organizations:ListAccounts",
-#        "organizations:ListAccountsForParent",
-#        "organizations:ListPolicies",
-#        "organizations:ListPoliciesForTarget",
-#        "organizations:ListTargetsForPolicy",
-#        "organizations:ListTagsForResource"
-#      ],
-#      "Resource": [
-#        "arn:${data.aws_partition.current.partition}:organizations::${module.org-creation.org_roots.id}:ou/${aws_organizations_organizational_unit.ou[*].id}/*"]
-#    }
-#  ]
-#}
-#EOF
-#}
+
+resource "aws_organizations_organizational_unit" "ou" {
+  depends_on = [module.org]
+  name      = "app_ou"
+  parent_id = module.org.org_roots[0]["id"]
+}
+
+
+resource "aws_organizations_resource_policy" "org_resource_policy" {
+  content = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Statement",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:${data.aws_partition.current.partition}:iam::${module.org.org_id}:root"
+      },
+      "Action": [
+        "organizations:CreatePolicy",
+        "organizations:UpdatePolicy",
+        "organizations:DeletePolicy",
+        "organizations:AttachPolicy",
+        "organizations:DetachPolicy",
+        "organizations:EnablePolicyType",
+        "organizations:DisablePolicyType",
+        "organizations:DescribeOrganization",
+        "organizations:DescribeOrganizationalUnit",
+        "organizations:DescribeAccount",
+        "organizations:DescribePolicy",
+        "organizations:DescribeEffectivePolicy",
+        "organizations:ListRoots",
+        "organizations:ListOrganizationalUnitsForParent",
+        "organizations:ListParents",
+        "organizations:ListChildren",
+        "organizations:ListAccounts",
+        "organizations:ListAccountsForParent",
+        "organizations:ListPolicies",
+        "organizations:ListPoliciesForTarget",
+        "organizations:ListTargetsForPolicy",
+        "organizations:ListTagsForResource"
+      ],
+      "Resource": [
+        "${aws_organizations_organizational_unit.ou.arn}"
+      ]
+    }
+  ]
+}
+EOF
+}

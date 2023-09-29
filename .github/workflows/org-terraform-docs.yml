@@ -5,4 +5,4 @@ on:
 
 jobs:
   terraform-docs:
-    uses: Coalfire-CF/Actions/.github/workflows/org-creation-terraform-docs.yml@main
+    uses: Coalfire-CF/Actions/.github/workflows/org-terraform-docs.yml@main

@@ -13,7 +13,7 @@ module "org" {
   org_member_account_numbers = ["358745275192"]
   delegated_admin_account_id = "358745275192"
   delegated_service_principal = "principal"
-  #enabled_policy_types = ["SERVICE_CONTROL_POLICY", "BACKUP_POLICY", "TAG_POLICY"]
+  enabled_policy_types = ["SERVICE_CONTROL_POLICY"]
   service_access_principals = ["cloudtrail.amazonaws.com",
     "config.amazonaws.com",
     "securityhub.amazonaws.com",
@@ -38,7 +38,7 @@ resource "aws_organizations_resource_policy" "org_resource_policy" {
       "Sid": "Statement",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:${data.aws_partition.current.partition}:iam::${module.org.org_id}:root"
+        "AWS": "${module.org.master_account_id}"
       },
       "Action": [
         "organizations:CreatePolicy",
@@ -65,7 +65,7 @@ resource "aws_organizations_resource_policy" "org_resource_policy" {
         "organizations:ListTagsForResource"
       ],
       "Resource": [
-        "${aws_organizations_organizational_unit.ou.arn}"
+        "*"
       ]
     }
   ]

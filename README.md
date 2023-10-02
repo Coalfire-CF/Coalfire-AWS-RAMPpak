@@ -25,7 +25,7 @@
 ## Code Updates
 
 1. Update `global-vars.tf` in `aws/terraform/us-gov-west-1/global-vars.tf`
-2. Update `tstate.tf` and `remote-data/tf` in each directory (when applicable) to reflect environment.
+2. Update `tstate.tf` and `remote-data.tf` in each directory (when applicable) to reflect environment.
 3. Update `vars.tfvars` in each directory (when applicable) to reflect environment.
 
 ## Deployment Steps

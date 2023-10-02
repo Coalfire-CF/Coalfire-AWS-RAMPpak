@@ -25,17 +25,17 @@ module "mgmt_vpc" {
   }
 
   public_subnets       = local.public_subnets
-  public_subnet_suffix = "dmz"
-  public_custom_routes = [
-    {
-      destination_cidr_block = "8.8.8.8/32"
-      internet_route         = true
-    },
-    {
-      destination_cidr_block = "4.4.4.4/32"
-      internet_route         = true
-    }
-  ]
+  public_subnet_suffix = "public"
+#  public_custom_routes = [
+#    {
+#      destination_cidr_block = "8.8.8.8/32"
+#      internet_route         = true
+#    },
+#    {
+#      destination_cidr_block = "4.4.4.4/32"
+#      internet_route         = true
+#    }
+#  ]
 
   single_nat_gateway     = false
   enable_nat_gateway     = true

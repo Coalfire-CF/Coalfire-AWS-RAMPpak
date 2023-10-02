@@ -1,5 +1,5 @@
 module "nfw_kms_key" {
-  count = var.deploy_aws_nfw ? 1 : 0
+  #count = var.deploy_aws_nfw ? 1 : 0
 
   source = "github.com/Coalfire-CF/terraform-aws-kms"
 

@@ -48,18 +48,18 @@ module "mgmt_vpc" {
   cloudwatch_log_group_kms_key_id        = data.terraform_remote_state.day0.outputs.cloudwatch_kms_key_arn
 
   ### Network Firewall ###
-  deploy_aws_nfw                        = true
+  deploy_aws_nfw                        = var.deploy_aws_nfw
   aws_nfw_prefix                        = var.resource_prefix
   aws_nfw_name                          = "ooc-nfw"
   aws_nfw_stateless_rule_group          = local.stateless_rule_group_shrd_svcs
   aws_nfw_fivetuple_stateful_rule_group = local.fivetuple_rule_group_shrd_svcs
   aws_nfw_domain_stateful_rule_group    = local.domain_stateful_rule_group_shrd_svcs
   aws_nfw_suricata_stateful_rule_group  = local.suricata_rule_group_shrd_svcs
-  nfw_kms_key_id                        = module.nfw_kms_key[0].kms_key_arn
+  nfw_kms_key_id                        = module.nfw_kms_key.kms_key_arn
 
-  # When deploying NFW, firewall_subnets must be specified
-  firewall_subnets       = local.firewall_subnets
-  firewall_subnet_suffix = "firewall"
+  #When deploying NFW, firewall_subnets must be specified
+#  firewall_subnets       = local.firewall_subnets
+#  firewall_subnet_suffix = "firewall"
 
   /* Add Additional tags here */
   tags = {

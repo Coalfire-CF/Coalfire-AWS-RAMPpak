@@ -82,8 +82,8 @@ source "amazon-ebs" "linux" {
   aws_polling {
     # Default value is 40, increasing to avoid timeout during encryption
     # https://developer.hashicorp.com/packer/plugins/builders/amazon#resourcenotready-error
-    delay_seconds = 30
-    max_attempts  = 80
+    delay_seconds = 60
+    max_attempts  = 240
   }
   ami_users                   = ["${var.app_account_id1}", "${var.app_account_id2}"]
   associate_public_ip_address = true

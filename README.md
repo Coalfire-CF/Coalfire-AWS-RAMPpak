@@ -5,7 +5,7 @@
 
 ## Coalfire AWS RAMPpak
 
-Coalfire created reference architecture for FedRAMP Azure builds. This repository is used as a parent directory to deploy Coalfire-CF/terraform-aws-<service> modules.
+Coalfire created reference architecture for FedRAMP AWS builds. This repository is used as a parent directory to deploy Coalfire-CF/terraform-aws-<service> modules.
 
 Learn more at Coalfire OpenSource.
 

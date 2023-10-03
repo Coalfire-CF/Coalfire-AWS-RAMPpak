@@ -70,13 +70,13 @@ profile = "<customer-prefix>-mgmt"
 - If everything looks correct in the plan output, run `terraform apply`
 
 ``` hcl
-data "terraform_remote_state" "networking" {
+data "terraform_remote_state" "day0" {
   backend = "s3"
 
   config = {
     bucket  = "pak-us-gov-west-1-tf-state"
     region  = var.aws_region
-    key     = "pak-us-gov-west-1-networking.tfstate"
+    key     = "pak-us-gov-west-1-tfsetup.tfstate"
     profile = "pak-mgmt"
   }
 }

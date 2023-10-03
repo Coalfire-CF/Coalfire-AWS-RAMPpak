@@ -32,7 +32,7 @@ Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 ## Code Updates
 
 1. Update `global-vars.tf` in `aws/terraform/us-gov-west-1/global-vars.tf`
-2. Update `tstate.tf`  in each directory (when applicable).
+2. Update `tstate.tf`  in each directory (when applicable). Example below:
 ``` hcl
 terraform {
   required_version = ">=1.5.0"
@@ -45,14 +45,14 @@ terraform {
   backend "s3" {
     bucket         = "pak-us-gov-west-1-tf-state"
     region         = "us-gov-west-1"
-    key            = "pak-us-gov-west-1-networking.tfstate"
+    key            = "pak-us-gov-west-1-tfsetup.tfstate"
     dynamodb_table = "pak-us-gov-west-1-state-lock"
     encrypt        = true
   }
 }
 ```
 
-3. Update `remote-data.tf`in each directory (when applicable).
+3. Update `remote-data.tf`in each directory (when applicable). Example below:
 ``` hcl
 data "terraform_remote_state" "day0" {
   backend = "s3"

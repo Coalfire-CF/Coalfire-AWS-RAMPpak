@@ -42,13 +42,17 @@ terraform {
 ```
 
 ## Deployment Steps
-- Update the `mgmt_*` and `org_*` variables (role ARN and external ID) prior to running
-- Change the working directory to the `management-account` directory
-- If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
-  - From in front of `backend "s3"` to the bracket associated with the end of the code block
-- Run `terraform init`
-- Run `terraform plan -var-file vars.tfvars` to review the resources being created
-- If everything looks correct in the plan output, run `terraform apply -var-file vars.tfvars`
+1. Update the `mgmt_*` and `org_*` variables (role ARN and external ID) prior to running
+2. Change the working directory the `org-onboarding` folder
+   - If you are running this directory for the first time, comment out the S3 backend in `tstate.tf` from in front of `backend "s3"` to the bracket associated with the end of the code block
+3. Run `terraform init` to download modules and create initial local state file.
+
+4. Populate `vars.tfvars` 
+
+5. Run `terraform plan -var-file vars.tfvars` to ensure no errors and validate plan is deploying expected resources.
+
+6. Run `terraform apply -var-file vars.tfvars` to deploy infrastructure.
+
 
 ``` hcl
 terraform {

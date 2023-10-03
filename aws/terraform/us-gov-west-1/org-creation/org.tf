@@ -6,19 +6,15 @@ module "org" {
   }
 
   feature_set = "ALL"
-  aws_region                = var.default_aws_region
-  aws_sec_hub_standards_arn = ["arn:${data.aws_partition.current.partition}:securityhub:${var.default_aws_region}::standards/cis-aws-foundations-benchmark/v/1.4.0", "arn:${data.aws_partition.current.partition}:securityhub:${var.default_aws_region}::standards/aws-foundational-security-best-practices/v/1.0.0"]
+  aws_region                = var.aws_region
+  aws_sec_hub_standards_arn = ["arn:${data.aws_partition.current.partition}:securityhub:${var.aws_region}::standards/cis-aws-foundations-benchmark/v/1.4.0", "arn:${data.aws_partition.current.partition}:securityhub:${var.aws_region}::standards/aws-foundational-security-best-practices/v/1.0.0"]
   resource_prefix           = var.resource_prefix
   s3_kms_key_arn            = data.terraform_remote_state.day0.outputs.s3_kms_key_arn
-  org_member_account_numbers = ["111111111111"]
-  delegated_admin_account_id = "111111111111"
-  delegated_service_principal = "principal"
-  enabled_policy_types = ["SERVICE_CONTROL_POLICY"]
-  service_access_principals = ["cloudtrail.amazonaws.com",
-    "config.amazonaws.com",
-    "securityhub.amazonaws.com",
-    "guardduty.amazonaws.com",
-    "config-multiaccountsetup.amazonaws.com"]
+  org_member_account_numbers = var.org_member_account_numbers
+  delegated_admin_account_id = var.delegated_admin_account_id
+  delegated_service_principal = var.delegated_service_principal
+  enabled_policy_types = var.enabled_policy_types
+  service_access_principals = var.service_access_principals
 }
 
 

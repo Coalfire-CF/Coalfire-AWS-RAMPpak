@@ -81,14 +81,15 @@ associate_eip = true
 ## Deployment Steps
 
 1. Change directory to the `bastion` folder
+2. If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
+  - From in front of `backend "s3"` to the bracket associated with the end of the code block
+3. Run `terraform init` to download modules and create initial local state file.
 
-2. Run `terraform init` to download modules and create initial local state file.
+4. Populate `vars.tfvars` 
 
-3. Populate `vars.tfvars` 
+5. Run `terraform plan -var-file vars.tfvars` to ensure no errors and validate plan is deploying expected resources.
 
-4. Run `terraform plan -var-file vars.tfvars` to ensure no errors and validate plan is deploying expected resources.
-
-5. Run `terraform apply -var-file vars.tfvars` to deploy infrastructure.
+6. Run `terraform apply -var-file vars.tfvars` to deploy infrastructure.
 
 ## Example Deployment
 

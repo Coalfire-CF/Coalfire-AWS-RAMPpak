@@ -27,10 +27,6 @@ override.tf.json
 *.zip
 .DS_Store
 
-# NessusBurp Install files are too large to commit
-**/nessusburp/*.exe
-**/nessusburp/*.msi
-**/nessusburp/*.txt
 
 # Ansible
 *.pub

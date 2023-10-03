@@ -1,7 +1,7 @@
-# DAY 0 Network Deployment
+# Networking Deployment Management Account 
 
 ## Description
-This module includes the networking setup, including VPC provisions, Subnet creation and provisions, AWS network firewall policies, and other various network components.
+This module includes the networking setup, including VPC provisions, Subnet creation and provisions, AWS network firewall resources and policies, and other various network components.
 
 FedRAMP Compliance: Moderate, High
 
@@ -19,11 +19,20 @@ A high-level list of resources created as a part of this module.
   - Private
   - Firewall
   - Compute
+- NAT Gateways
+- Internet Gateways
+- AWS Network Firewall
+- AWS Network Firewall Policies
+- Cloudwatch Logs
+- VPC Flow Logs
 - IAM Roles
 - IAM Policies
 - KMS Keys
 
 ## Code Updates
+
+`tstate.tf` Update to the appropriate version and storage accounts, see sample
+``` hcl
 terraform {
   required_version = ">=1.5.0"
   required_providers {
@@ -33,13 +42,14 @@ terraform {
     }
 }
   backend "s3" {
-    bucket         = "ooc-us-gov-west-1-tf-state"
+    bucket         = "pak-us-gov-west-1-tf-state"
     region         = "us-gov-west-1"
-    key            = "ooc-us-gov-west-1-networking.tfstate"
-    dynamodb_table = "ooc-us-gov-west-1-state-lock"
+    key            = "pak-us-gov-west-1-networking.tfstate"
+    dynamodb_table = "pak-us-gov-west-1-state-lock"
     encrypt        = true
   }
 }
+```
 
 ## tfvars Example
 ``` hcl
@@ -64,10 +74,10 @@ data "terraform_remote_state" "day0" {
   backend = "s3"
 
   config = {
-    bucket  = "ooc-<aws-region>-tf-state"
+    bucket  = "pak-us-gov-west-1-tf-state"
     region  = var.aws_region
-    key     = "ooc-<aws-region>-tfsetup.tfstate"
-    profile = "ooc-mgmt"
+    key     = "pak-us-gov-west-1-tfsetup.tfstate"
+    profile = "pak-mgmt"
   }
 }
 ```
@@ -118,7 +128,7 @@ module "mgmt_vpc" {
   ### Network Firewall ###
   deploy_aws_nfw                        = var.deploy_aws_nfw
   aws_nfw_prefix                        = var.resource_prefix
-  aws_nfw_name                          = "ooc-nfw"
+  aws_nfw_name                          = "pak-nfw"
   aws_nfw_stateless_rule_group          = local.stateless_rule_group_shrd_svcs
   aws_nfw_fivetuple_stateful_rule_group = local.fivetuple_rule_group_shrd_svcs
   aws_nfw_domain_stateful_rule_group    = local.domain_stateful_rule_group_shrd_svcs
@@ -181,7 +191,7 @@ module "mgmt_vpc" {
   ### Network Firewall ###
   deploy_aws_nfw                        = var.deploy_aws_nfw
   aws_nfw_prefix                        = var.resource_prefix
-  aws_nfw_name                          = "ooc-nfw"
+  aws_nfw_name                          = "pak-nfw"
   aws_nfw_stateless_rule_group          = local.stateless_rule_group_shrd_svcs
   aws_nfw_fivetuple_stateful_rule_group = local.fivetuple_rule_group_shrd_svcs
   aws_nfw_domain_stateful_rule_group    = local.domain_stateful_rule_group_shrd_svcs

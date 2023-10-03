@@ -57,9 +57,9 @@ module "mgmt_vpc" {
   aws_nfw_suricata_stateful_rule_group  = local.suricata_rule_group_shrd_svcs
   nfw_kms_key_id                        = module.nfw_kms_key.kms_key_arn
 
-  #When deploying NFW, firewall_subnets must be specified
-#  firewall_subnets       = local.firewall_subnets
-#  firewall_subnet_suffix = "firewall"
+  When deploying NFW, firewall_subnets must be specified
+  firewall_subnets       = local.firewall_subnets
+  firewall_subnet_suffix = "firewall"
 
   /* Add Additional tags here */
   tags = {

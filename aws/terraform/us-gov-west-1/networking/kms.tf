@@ -1,5 +1,5 @@
 module "nfw_kms_key" {
-  #count = var.deploy_aws_nfw ? 1 : 0
+  count = var.deploy_aws_nfw ? 1 : 0
 
   source = "github.com/Coalfire-CF/terraform-aws-kms"
 
@@ -10,8 +10,6 @@ module "nfw_kms_key" {
 
 data "aws_iam_policy_document" "nfw_kms_policy" {
   provider = aws.mgmt
-
-  # https://docs.aws.amazon.com/network-firewall/latest/developerguide/kms-encryption-at-rest.html
 
   statement {
     sid     = "Enable IAM User Permissions"

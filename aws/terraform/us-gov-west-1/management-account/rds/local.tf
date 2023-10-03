@@ -1,4 +1,0 @@
-locals {
-  name = "test-db"
-
-}

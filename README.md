@@ -3,80 +3,129 @@
 
 </div>
 
-## Coalfire AWS RAMPpak
+# Coalfire pak README Template
 
-## Description
-Coalfire created reference architecture for FedRAMP AWS builds. This repository is used as a parent directory to deploy Coalfire-CF/`terraform-aws-<service>` modules.
+## Repository Title
 
-Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
+Include the name of the Repository as the header above e.g. `ACE-Cloud-Service`
 
 ## Dependencies
 
-- AWS Account 
-- AWS CLI is installed
+List any dependencies here. E.g. security-core, region-setup
 
 ## Resource List
 
-| Directory | Purpose |
-| --------- | ------- |
-| `ansible` | Ansible playbooks |
-| `aws/terraform/us-gov-west-1/management-account/day0` | Account Setup Terraform files |
-| `aws/terraform/us-gov-west-1/management-account/rds` | RDS Database Terraform files |
-| `aws/terraform/us-gov-west-1/global-vars.tf` | Global variables |
-| `aws/terraform/us-gov-west-1/networking` | Networking deployment Terraform files |
-| `aws/terraform/us-gov-west-1/org-creation` | AWS Organization Terraform files |
-| `aws/terraform/us-gov-west-1/org-onboarding` | AWS Organization Onboarding Terraform files |
+Insert a high-level list of resources created as a part of this module. E.g.
+
+- Storage Account
+- Containers
+- Storage share
+- Lifecycle policy
+- CMK key and Iam Role Assignment
+- Monitor diagnostic setting
 
 ## Code Updates
 
-1. Update `global-vars.tf` in `aws/terraform/us-gov-west-1/global-vars.tf`
-2. Update `tstate.tf`  in each directory (when applicable).
+If applicable, add here. For example, updating variables, updating `tstate.tf`, or remote data sources.
+
+`tstate.tf` Update to the appropriate version and storage accounts, see sample
+
 ``` hcl
 terraform {
-  required_version = ">=1.5.0"
+  required_version = ">= 1.1.7"
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.45.0"
     }
-}
-  backend "s3" {
-    bucket         = "pak-us-gov-west-1-tf-state"
-    region         = "us-gov-west-1"
-    key            = "pak-us-gov-west-1-networking.tfstate"
-    dynamodb_table = "pak-us-gov-west-1-state-lock"
-    encrypt        = true
+  }
+  backend "azurerm" {
+    resource_group_name  = "prod-mp-core-rg"
+    storage_account_name = "prodmpsatfstate"
+    container_name       = "tfstatecontainer"
+    environment          = "usgovernment"
+    key                  = "ad.tfstate"
   }
 }
 ```
 
-3. Update `remote-data.tf`in each directory (when applicable).
+Change directory to the `active-directory` folder
+
+Run `terraform init` to download modules and create initial local state file.
+
+Run `terraform plan` to ensure no errors and validate plan is deploying expected resources.
+
+Run `terraform apply` to deploy infrastructure.
+
+Update the `remote-data.tf` file to add the security state key
+
 ``` hcl
-data "terraform_remote_state" "day0" {
-  backend = "s3"
 
+data "terraform_remote_state" "usgv-ad" {
+  backend = "azurerm"
   config = {
-    bucket  = "${var.resource_prefix}-${var.aws_region}-tf-state"
-    region  = var.aws_region
-    key     = "${var.resource_prefix}-${var.aws_region}-tfsetup.tfstate"
-    profile = "pak-mgmt"
+    storage_account_name = "${local.storage_name_prefix}satfstate"
+    resource_group_name  = "${local.resource_prefix}-core-rg"
+    container_name       = "${var.location_abbreviation}${var.app_abbreviation}tfstatecontainer"
+    environment          = var.az_environment
+    key                  = "${var.location_abbreviation}-ad.tfstate"
   }
 }
 ```
-3. Update `vars.tfvars` in each directory (when applicable).
 
 ## Deployment Steps
 
-1. Log in with with AWS creds into AWS CLI. `aws configure'.
-2. Navigate to `aws/terraform/us-gov-west-1/management-account/day0` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
-3. Navigate to `aws/terraform/us-gov-west-1/org-creation` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
-4. Navigate to `aws/terraform/us-gov-west-1/org-onboarding` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
-5. Navigate to `aws/terraform/us-gov-west-1/networking` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
-6. Navigate to `aws/terraform/us-gov-west-1/management-account/bastion` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
+This module can be called as outlined below.
 
-## Deployment Configurations
+- Change directories to the `reponame` directory.
+- From the `terraform/azure/reponame` directory run `terraform init`.
+- Run `terraform plan` to review the resources being created.
+- If everything looks correct in the plan output, run `terraform apply`.
 
-- Ensure that the `vars.tfvars` file is never uploaded or committed to any public repository platform (e.g., GitHub, GitLab, Bitbucket, etc.). This file contains sensitive information and should be kept private.
+## Usage
+
+Include example for how to call the module below with generic variables
+
+```hcl
+provider "azurerm" {
+  features {}
+}
+
+module "core_sa" {
+  source                    = "github.com/Coalfire-CF/ACE-Azure-StorageAccount?ref=vX.X.X"
+  name                       = "${replace(var.resource_prefix, "-", "")}tfstatesa"
+  resource_group_name        = azurerm_resource_group.management.name
+  location                   = var.location
+  account_kind               = "StorageV2"
+  ip_rules                   = var.ip_for_remote_access
+  diag_log_analytics_id      = azurerm_log_analytics_workspace.core-la.id
+  virtual_network_subnet_ids = var.fw_virtual_network_subnet_ids
+  tags                       = var.tags
+
+  #OPTIONAL
+  public_network_access_enabled = true
+  enable_customer_managed_key   = true
+  cmk_key_vault_id              = module.core_kv.id
+  cmk_key_vault_key_name        = azurerm_key_vault_key.tfstate-cmk.name
+  storage_containers = [
+    "tfstate"
+  ]
+  storage_shares = [
+    {
+      name = "test"
+      quota = 500
+    }
+  ]
+  lifecycle_policies = [
+    {
+      prefix_match = ["tfstate"]
+      version = {
+        delete_after_days_since_creation = 90
+      }
+    }
+  ]
+}
+```
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

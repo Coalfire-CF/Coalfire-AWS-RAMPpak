@@ -1,82 +1,71 @@
-## DAY 0 Deployment 
-<div align="center">
-<img src="coalfire_logo.png" width="200">
-
-</div>
-
-# AWS Account Setup Terraform Module
-
+# DAY 0 Deployment Management Account 
 
 ## Description
-
-The AWS account set up module creates the initial account configuration for your project, including IAM roles, KMS keys, S3 installs bucket, and more.
+This module provisions the management account setup, including initial account confirguations, IAM roles, KMS keys, S3 bucket installs, etc.
 
 FedRAMP Compliance: High
 
+## Dependencies
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~>1.5.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
+
 ## Resource List
-
-Resources that are created as a part of this module include:
-
-- IAM roles
-- IAM policies
+A high-level list of resources created as a part of this module.
+- IAM Roles
+- IAM Policies
 - IAM instance profiles
-- KMS keys
+- KMS Keys
 - S3 buckets
-- Security core module resources
+- Region Setup
+- Security Core Module Resources
 
-## Usage
-```
-module "account-setup" {
-  source = "github.com/Coalfire-CF/terraform-aws-account-setup"
+## Code Updates
 
-  aws_region = "us-east-1"
-  default_aws_region = "us-east-1"
-
-  application_account_numbers = ["account-number1", "account-number2", "account-number3"]
-  account_number = "your-account-number"
-
-  resource_prefix = "pre"
-  create_cloudtrail = true
-  partition = "aws"
-  ad_secrets_manager_path = "your/ad/path"
-  enable_aws_config = true
-  delete_after = 90
+`tstate.tf` Update to the appropriate version and storage accounts, see sample
+``` hcl
+terraform {
+  required_version = ">=1.5.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
 }
-
+  backend "s3" {
+    bucket         = "ooc-us-gov-west-1-tf-state"
+    region         = "us-gov-west-1"
+    key            = "ooc-us-gov-west-1-tfsetup.tfstate"
+    dynamodb_table = "ooc-us-gov-west-1-state-lock"
+    encrypt        = true
+  }
+}
 ```
 
-<!-- BEGIN_TF_DOCS -->
-## Requirements
+## tfvars Example
+``` hcl
+resource_prefix = "<customer-prefix>"
+aws_region = "<aws-region>"
+```
 
+## Deployment Steps
+- Change the working directory to the `management-account` directory
+- If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
+  - From in front of `backend "s3"` to the bracket associated with the end of the code block
+- Run `terraform init`
+- Run `terraform plan` to review the resources being created
+- If everything looks correct in the plan output, run `terraform apply -var-file ./tfvars/vars.tfvars`
 
-## Providers
+``` hcl
+data "terraform_remote_state" "day0" {
+  backend = "s3"
 
-
-## Modules
-
-
-## Resources
-
-## Inputs
-
-## Outputs
-
-<!-- END_TF_DOCS -->
-
-## Contributing
-
-[Relative or absolute link to contributing.md](CONTRIBUTING.md)
-
-
-## License
-
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit/)
-
-
-## Coalfire Pages
-
-[Absolute link to any relevant Coalfire Pages](https://coalfire.com/)
-
-### Copyright
-
-Copyright © 2023 Coalfire Systems Inc.
+  config = {
+    bucket  = "ooc-us-gov-west-1-tf-state"
+    region  = var.aws_region
+    key     = "ooc-us-gov-west-1-tfsetup.tfstate"
+    profile = "ooc-mgmt"
+  }
+}
+```

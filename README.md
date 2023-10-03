@@ -41,10 +41,10 @@ terraform {
     }
 }
   backend "s3" {
-    bucket         = "ooc-us-gov-west-1-tf-state"
+    bucket         = "pak-us-gov-west-1-tf-state"
     region         = "us-gov-west-1"
-    key            = "ooc-us-gov-west-1-networking.tfstate"
-    dynamodb_table = "ooc-us-gov-west-1-state-lock"
+    key            = "pak-us-gov-west-1-networking.tfstate"
+    dynamodb_table = "pak-us-gov-west-1-state-lock"
     encrypt        = true
   }
 }
@@ -59,7 +59,7 @@ data "terraform_remote_state" "day0" {
     bucket  = "${var.resource_prefix}-${var.aws_region}-tf-state"
     region  = var.aws_region
     key     = "${var.resource_prefix}-${var.aws_region}-tfsetup.tfstate"
-    profile = "ooc-mgmt"
+    profile = "pak-mgmt"
   }
 }
 ```

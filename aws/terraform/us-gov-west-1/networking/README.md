@@ -46,10 +46,10 @@ data "terraform_remote_state" "day0" {
   backend = "s3"
 
   config = {
-    bucket  = "ooc-us-gov-west-1-tf-state"
+    bucket  = "pak-us-gov-west-1-tf-state"
     region  = var.aws_region
-    key     = "ooc-us-gov-west-1-tfsetup.tfstate"
-    profile = "ooc-mgmt"
+    key     = "pak-us-gov-west-1-tfsetup.tfstate"
+    profile = "pak-mgmt"
   }
 }
 ```
@@ -100,7 +100,7 @@ module "mgmt_vpc" {
   ### Network Firewall ###
   deploy_aws_nfw                        = var.deploy_aws_nfw
   aws_nfw_prefix                        = var.resource_prefix
-  aws_nfw_name                          = "ooc-nfw"
+  aws_nfw_name                          = "pak-nfw"
   aws_nfw_stateless_rule_group          = local.stateless_rule_group_shrd_svcs
   aws_nfw_fivetuple_stateful_rule_group = local.fivetuple_rule_group_shrd_svcs
   aws_nfw_domain_stateful_rule_group    = local.domain_stateful_rule_group_shrd_svcs
@@ -163,7 +163,7 @@ module "mgmt_vpc" {
   ### Network Firewall ###
   deploy_aws_nfw                        = var.deploy_aws_nfw
   aws_nfw_prefix                        = var.resource_prefix
-  aws_nfw_name                          = "ooc-nfw"
+  aws_nfw_name                          = "pak-nfw"
   aws_nfw_stateless_rule_group          = local.stateless_rule_group_shrd_svcs
   aws_nfw_fivetuple_stateful_rule_group = local.fivetuple_rule_group_shrd_svcs
   aws_nfw_domain_stateful_rule_group    = local.domain_stateful_rule_group_shrd_svcs

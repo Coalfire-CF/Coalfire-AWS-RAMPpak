@@ -24,10 +24,10 @@ terraform {
     }
 }
   backend "s3" {
-    bucket         = "ooc-us-gov-west-1-tf-state"
+    bucket         = "pak-us-gov-west-1-tf-state"
     region         = "us-gov-west-1"
     key            = "${var.location_abbreviation}-bastion.tfstate"
-    dynamodb_table = "ooc-us-gov-west-1-state-lock"
+    dynamodb_table = "pak-us-gov-west-1-state-lock"
     encrypt        = true
   }
 }
@@ -42,7 +42,7 @@ data "terraform_remote_state" "day0" {
     bucket  = "${var.resource_prefix}-${var.aws_region}-tf-state"
     region  = var.aws_region
     key     = "${var.resource_prefix}-${var.aws_region}-tfsetup.tfstate"
-    profile = "ooc-mgmt"
+    profile = "pak-mgmt"
   }
 }
 
@@ -53,17 +53,17 @@ data "terraform_remote_state" "networking" {
     bucket  = "${var.resource_prefix}-${var.aws_region}-tf-state"
     region  = var.aws_region
     key     = "${var.resource_prefix}-${var.aws_region}-networking.tfstate"
-    profile = "ooc-mgmt"
+    profile = "pak-mgmt"
   }
 }
 ```
 ## tfvars Example
 ``` hcl
-resource_prefix = "ooc"
+resource_prefix = "pak"
 aws_region = "us-gov-west-1"
 instance_name = "win_bastion"
 instance_size = "t3a.medium"
-key_name = "ooc-test"
+key_name = "pak-test"
 instance_volume_size = 80
 associate_eip = true
 ```

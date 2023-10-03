@@ -10,8 +10,8 @@ module "org" {
   aws_sec_hub_standards_arn = ["arn:${data.aws_partition.current.partition}:securityhub:${var.default_aws_region}::standards/cis-aws-foundations-benchmark/v/1.4.0", "arn:${data.aws_partition.current.partition}:securityhub:${var.default_aws_region}::standards/aws-foundational-security-best-practices/v/1.0.0"]
   resource_prefix           = var.resource_prefix
   s3_kms_key_arn            = data.terraform_remote_state.day0.outputs.s3_kms_key_arn
-  org_member_account_numbers = ["358745275192"]
-  delegated_admin_account_id = "358745275192"
+  org_member_account_numbers = ["111111111111"]
+  delegated_admin_account_id = "111111111111"
   delegated_service_principal = "principal"
   enabled_policy_types = ["SERVICE_CONTROL_POLICY"]
   service_access_principals = ["cloudtrail.amazonaws.com",

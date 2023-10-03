@@ -1,7 +1,7 @@
-# DAY 0 Deployment Management Account 
+# DAY 0 Deployment Org-Creation
 
 ## Description
-This module provisions the management account setup, including initial account confirguations, IAM roles, KMS keys, S3 bucket installs, etc.
+This module includes the organization creation in AWS.
 
 FedRAMP Compliance: High
 
@@ -11,20 +11,7 @@ FedRAMP Compliance: High
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~>1.5.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
 
-## Resource List
-A high-level list of resources created as a part of this module.
-- IAM Roles
-- IAM Policies
-- IAM instance profiles
-- KMS Keys
-- S3 buckets
-- Region Setup
-- Security Core Module Resources
-
 ## Code Updates
-
-`tstate.tf` Update to the appropriate version and storage accounts, see sample
-``` hcl
 terraform {
   required_version = ">=1.5.0"
   required_providers {
@@ -34,38 +21,41 @@ terraform {
     }
 }
   backend "s3" {
-    bucket         = "ooc-us-gov-west-1-tf-state"
+    bucket         = "ooc-<aws-region>-tf-state"
     region         = "us-gov-west-1"
-    key            = "ooc-us-gov-west-1-tfsetup.tfstate"
-    dynamodb_table = "ooc-us-gov-west-1-state-lock"
+    key            = "ooc-<aws-region>-org.tfstate"
+    dynamodb_table = "ooc-<aws-region>-state-lock"
     encrypt        = true
   }
 }
+
+## tfvars Example
+``` hcl
+resource_prefix = "<customer-prefix>"
+deploy_aws_nfw = true
+aws_region = "<aws-region>"
+cidrs_for_remote_access = ["<Customer-IP>"]
+mgmt_vpc_cidr = "<Customer-Custom-CIDR-Range"
+profile = "<customer-prefix>-mgmt"
 ```
 
 ## Deployment Steps
-- Change the working directory to the `management-account` directory
+- Change the working directory the `networking` folder
 - If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
   - From in front of `backend "s3"` to the bracket associated with the end of the code block
 - Run `terraform init`
 - Run `terraform plan` to review the resources being created
-- If everything looks correct in the plan output, run `terraform apply -var-file ./tfvars/vars.tfvars`
+- If everything looks correct in the plan output, run `terraform apply`
 
 ``` hcl
-terraform {
-  required_version = ">=1.5.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-}
-  backend "s3" {
-    bucket         = "ooc-us-gov-west-1-tf-state"
-    region         = "us-gov-west-1"
-    key            = "ooc-us-gov-west-1-tfsetup.tfstate"
-    dynamodb_table = "ooc-us-gov-west-1-state-lock"
-    encrypt        = true
+data "terraform_remote_state" "day0" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.resource_prefix}-${var.default_aws_region}-tf-state"
+    region  = var.default_aws_region
+    key     = "${var.resource_prefix}-${var.default_aws_region}-tfsetup.tfstate"
+    profile = "ooc-mgmt"
   }
 }
 ```

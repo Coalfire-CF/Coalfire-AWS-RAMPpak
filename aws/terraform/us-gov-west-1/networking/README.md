@@ -1,4 +1,4 @@
-# DAY 0 Deployment Management Account 
+# DAY 0 Network Deployment
 
 ## Description
 This module includes the networking setup, including VPC provisions, Subnet creation and provisions, AWS network firewall policies, and other various network components.
@@ -23,6 +23,24 @@ A high-level list of resources created as a part of this module.
 - IAM Policies
 - KMS Keys
 
+## Code Updates
+terraform {
+  required_version = ">=1.5.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+}
+  backend "s3" {
+    bucket         = "ooc-us-gov-west-1-tf-state"
+    region         = "us-gov-west-1"
+    key            = "ooc-us-gov-west-1-networking.tfstate"
+    dynamodb_table = "ooc-us-gov-west-1-state-lock"
+    encrypt        = true
+  }
+}
+
 ## tfvars Example
 ``` hcl
 resource_prefix = "<customer-prefix>"
@@ -46,9 +64,9 @@ data "terraform_remote_state" "day0" {
   backend = "s3"
 
   config = {
-    bucket  = "ooc-us-gov-west-1-tf-state"
+    bucket  = "ooc-<aws-region>-tf-state"
     region  = var.aws_region
-    key     = "ooc-us-gov-west-1-tfsetup.tfstate"
+    key     = "ooc-<aws-region>-tfsetup.tfstate"
     profile = "ooc-mgmt"
   }
 }

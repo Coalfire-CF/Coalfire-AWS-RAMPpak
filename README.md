@@ -7,6 +7,10 @@ Coalfire created reference architecture for FedRAMP AWS builds. This repository 
 
 Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 
+## Architecture
+
+![Coalfire-AWS-RAMPpak](Coalfire-AWS-RAMPpak.png)
+
 ## Dependencies
 
 - AWS Account 

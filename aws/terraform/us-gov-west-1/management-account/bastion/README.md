@@ -57,15 +57,27 @@ data "terraform_remote_state" "networking" {
   }
 }
 ```
+## tfvars Example
+resource_prefix = "ooc"
+aws_region = "us-gov-west-1"
+instance_name = "win_bastion"
+instance_size = "t3a.medium"
+key_name = "ooc-test"
+instance_volume_size = 80
+associate_eip = true
+
+
 ## Deployment Steps
 
-- Change directory to the `bastion` folder
+1. Change directory to the `bastion` folder
 
-- Run `terraform init` to download modules and create initial local state file.
+2. Run `terraform init` to download modules and create initial local state file.
 
-- Run `terraform plan` to ensure no errors and validate plan is deploying expected resources.
+3. Populate `vars.tfvars` 
 
-- Run `terraform apply` to deploy infrastructure.
+4. Run `terraform plan` to ensure no errors and validate plan is deploying expected resources.
+
+5. Run `terraform apply` to deploy infrastructure.
 
 ## Next Steps
 

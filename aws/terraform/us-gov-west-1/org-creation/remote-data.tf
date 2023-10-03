@@ -5,6 +5,6 @@ data "terraform_remote_state" "day0" {
     bucket  = "${var.resource_prefix}-${var.default_aws_region}-tf-state"
     region  = var.default_aws_region
     key     = "${var.resource_prefix}-${var.default_aws_region}-tfsetup.tfstate"
-    profile = "ooc-mgmt"
+    profile = "pak-mgmt"
   }
 }

@@ -5,7 +5,7 @@ data "aws_caller_identity" "mgmt_account" {
 
 variable "resource_prefix" {
   type        = string
-  default     = "ooc"
+  default     = "pak"
   description = "A prefix that should be attached to the names of resources"
 }
 

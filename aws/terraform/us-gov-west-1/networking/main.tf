@@ -50,7 +50,7 @@ module "mgmt_vpc" {
   ### Network Firewall ###
   deploy_aws_nfw                        = var.deploy_aws_nfw
   aws_nfw_prefix                        = var.resource_prefix
-  aws_nfw_name                          = "ooc-nfw"
+  aws_nfw_name                          = "pak-nfw"
   aws_nfw_stateless_rule_group          = local.stateless_rule_group_shrd_svcs
   aws_nfw_fivetuple_stateful_rule_group = local.fivetuple_rule_group_shrd_svcs
   aws_nfw_domain_stateful_rule_group    = local.domain_stateful_rule_group_shrd_svcs

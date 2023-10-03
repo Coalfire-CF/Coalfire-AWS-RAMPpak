@@ -5,51 +5,51 @@ module "mgmt_subnet_addrs" {
   base_cidr_block = var.mgmt_vpc_cidr
   networks = [
     {
-      name     = "ooc-firewall-1a"
+      name     = "pak-firewall-1a"
       new_bits = 8
     },
     {
-      name     = "ooc-firewall-1b"
+      name     = "pak-firewall-1b"
       new_bits = 8
     },
     {
-      name     = "ooc-firewall-1c"
+      name     = "pak-firewall-1c"
       new_bits = 8
     },
     {
-      name     = "ooc-public-1a"
+      name     = "pak-public-1a"
       new_bits = 8
     },
     {
-      name     = "ooc-public-1b"
+      name     = "pak-public-1b"
       new_bits = 8
     },
     {
-      name     = "ooc-public-1c"
+      name     = "pak-public-1c"
       new_bits = 8
     },
     {
-      name     = "ooc-compute-1a"
+      name     = "pak-compute-1a"
       new_bits = 8
     },
     {
-      name     = "ooc-compute-1b"
+      name     = "pak-compute-1b"
       new_bits = 8
     },
     {
-      name     = "ooc-compute-1c"
+      name     = "pak-compute-1c"
       new_bits = 8
     },
     {
-      name     = "ooc-private-1a"
+      name     = "pak-private-1a"
       new_bits = 8
     },
     {
-      name     = "ooc-private-1b"
+      name     = "pak-private-1b"
       new_bits = 8
     },
     {
-      name     = "ooc-private-1c"
+      name     = "pak-private-1c"
       new_bits = 8
     }
   ]

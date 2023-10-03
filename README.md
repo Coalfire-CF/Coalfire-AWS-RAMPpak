@@ -19,7 +19,6 @@ Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 
 | Directory | Purpose |
 | --------- | ------- |
-| `ansible` | Ansible playbooks |
 | `aws/terraform/us-gov-west-1/management-account/day0` | Account Setup Terraform files |
 | `aws/terraform/us-gov-west-1/management-account/rds` | RDS Database Terraform files |
 | `aws/terraform/us-gov-west-1/global-vars.tf` | Global variables |

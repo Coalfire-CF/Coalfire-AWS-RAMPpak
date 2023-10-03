@@ -28,6 +28,4 @@ override.tf.json
 .DS_Store
 
 
-# Ansible
-*.pub
-*.ppk
+

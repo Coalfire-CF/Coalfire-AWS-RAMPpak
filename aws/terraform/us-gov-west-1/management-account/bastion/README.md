@@ -86,9 +86,9 @@ associate_eip = true
 
 3. Populate `vars.tfvars` 
 
-4. Run `terraform plan` to ensure no errors and validate plan is deploying expected resources.
+4. Run `terraform plan -var-file vars.tfvars` to ensure no errors and validate plan is deploying expected resources.
 
-5. Run `terraform apply` to deploy infrastructure.
+5. Run `terraform apply -var-file vars.tfvars` to deploy infrastructure.
 
 ## Example Deployment
 

@@ -54,7 +54,7 @@ aws_region = "<aws-region>"
 - If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
   - From in front of `backend "s3"` to the bracket associated with the end of the code block
 - Run `terraform init`
-- Run `terraform plan` to review the resources being created
+- Run `terraform plan -var-file vars.tfvars` to review the resources being created
 - If everything looks correct in the plan output, run `terraform apply -var-file vars.tfvars`
 
 ``` hcl

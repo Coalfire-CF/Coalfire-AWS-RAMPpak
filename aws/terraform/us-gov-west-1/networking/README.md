@@ -66,8 +66,8 @@ profile = "<customer-prefix>-mgmt"
 - If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
   - From in front of `backend "s3"` to the bracket associated with the end of the code block
 - Run `terraform init`
-- Run `terraform plan` to review the resources being created
-- If everything looks correct in the plan output, run `terraform apply`
+- Run `terraform plan -var-file vars.tfvars` to review the resources being created
+- If everything looks correct in the plan output, run `terraform apply -var-file vars.tfvars`
 
 ``` hcl
 data "terraform_remote_state" "day0" {
@@ -83,7 +83,7 @@ data "terraform_remote_state" "day0" {
 ```
 
 ## Example Deployments
-The below are example deployements of the networking module, it consists of 2 examples, one with AWS Network Firewall and one without.
+The below are example deployments of the networking module, it consists of 2 examples, one with AWS Network Firewall and one without.
 
 ### AWS Networking deployment with AWS Network Firewall
 ```hcl

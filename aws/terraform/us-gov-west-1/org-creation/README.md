@@ -1,7 +1,7 @@
-# DAY 0 Deployment Org-Creation
+# Organization Creation
 
 ## Description
-This module includes the organization creation in AWS.
+This module facilitates the creation of organization infrastrucutre in AWS. Organizational structures are established and AWS security services such as AWS Security Hub, AWS Config and Multi-Account Setup, and AWS GuardDuty are integrated. Corresponding organization policies are also created.
 
 FedRAMP Compliance: High
 
@@ -21,26 +21,94 @@ terraform {
     }
 }
   backend "s3" {
-    bucket         = "ooc-<aws-region>-tf-state"
+    bucket         = "ooc-us-gov-west-1-tf-state"
     region         = "us-gov-west-1"
-    key            = "ooc-<aws-region>-org.tfstate"
-    dynamodb_table = "ooc-<aws-region>-state-lock"
+    key            = "ooc-us-gov-west-1-org.tfstate"
+    dynamodb_table = "ooc-us-gov-west-1-state-lock"
     encrypt        = true
   }
 }
 
-## tfvars Example
+## Module Example
 ``` hcl
-resource_prefix = "<customer-prefix>"
-deploy_aws_nfw = true
-aws_region = "<aws-region>"
-cidrs_for_remote_access = ["<Customer-IP>"]
-mgmt_vpc_cidr = "<Customer-Custom-CIDR-Range"
-profile = "<customer-prefix>-mgmt"
+module "org" {
+  source = "github.com/Coalfire-CF/terraform-aws-organization"
+
+  providers = {
+    aws = aws.mgmt
+  }
+
+  feature_set = "ALL"
+  aws_region                = var.default_aws_region
+  aws_sec_hub_standards_arn = ["arn:${data.aws_partition.current.partition}:securityhub:${var.default_aws_region}::standards/cis-aws-foundations-benchmark/v/1.4.0", "arn:${data.aws_partition.current.partition}:securityhub:${var.default_aws_region}::standards/aws-foundational-security-best-practices/v/1.0.0"]
+  resource_prefix           = var.resource_prefix
+  s3_kms_key_arn            = data.terraform_remote_state.day0.outputs.s3_kms_key_arn
+  org_member_account_numbers = ["111111111111"]
+  delegated_admin_account_id = "111111111111"
+  delegated_service_principal = "principal"
+  enabled_policy_types = ["SERVICE_CONTROL_POLICY"]
+  service_access_principals = ["cloudtrail.amazonaws.com",
+    "config.amazonaws.com",
+    "securityhub.amazonaws.com",
+    "guardduty.amazonaws.com",
+    "config-multiaccountsetup.amazonaws.com"]
+}
+
+
+resource "aws_organizations_organizational_unit" "ou" {
+  depends_on = [module.org]
+  name      = "app_ou"
+  parent_id = module.org.org_roots[0]["id"]
+}
+
+
+resource "aws_organizations_resource_policy" "org_resource_policy" {
+  content = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Statement",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "${module.org.master_account_id}"
+      },
+      "Action": [
+        "organizations:CreatePolicy",
+        "organizations:UpdatePolicy",
+        "organizations:DeletePolicy",
+        "organizations:AttachPolicy",
+        "organizations:DetachPolicy",
+        "organizations:EnablePolicyType",
+        "organizations:DisablePolicyType",
+        "organizations:DescribeOrganization",
+        "organizations:DescribeOrganizationalUnit",
+        "organizations:DescribeAccount",
+        "organizations:DescribePolicy",
+        "organizations:DescribeEffectivePolicy",
+        "organizations:ListRoots",
+        "organizations:ListOrganizationalUnitsForParent",
+        "organizations:ListParents",
+        "organizations:ListChildren",
+        "organizations:ListAccounts",
+        "organizations:ListAccountsForParent",
+        "organizations:ListPolicies",
+        "organizations:ListPoliciesForTarget",
+        "organizations:ListTargetsForPolicy",
+        "organizations:ListTagsForResource"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
+EOF
+}
 ```
 
 ## Deployment Steps
-- Change the working directory the `networking` folder
+- Change the working directory the `org-creation` folder
 - If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
   - From in front of `backend "s3"` to the bracket associated with the end of the code block
 - Run `terraform init`

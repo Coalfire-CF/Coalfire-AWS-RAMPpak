@@ -1,2 +1,0 @@
-drop tls any any -> $EXTERNAL_NET any (tls.sni; content: ".cnn.com"; startswith; nocase; endswith; msg: "matching TLS denylisted FQDNs"; priority: 1; flow:to_server, established; sid: 1; rev:1;)
-drop http any any -> $EXTERNAL_NET any (http.host; content: ".google.com"; startswith; endswith; msg: "matching HTTP denylisted FQDNs"; priority: 1; flow: to_server, established; sid: 3; rev: 1;)

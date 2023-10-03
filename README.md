@@ -5,6 +5,7 @@
 
 ## Coalfire AWS RAMPpak
 
+## Description
 Coalfire created reference architecture for FedRAMP AWS builds. This repository is used as a parent directory to deploy Coalfire-CF/`terraform-aws-<service>` modules.
 
 Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
@@ -29,8 +30,40 @@ Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 ## Code Updates
 
 1. Update `global-vars.tf` in `aws/terraform/us-gov-west-1/global-vars.tf`
-2. Update `tstate.tf` and `remote-data.tf` in each directory (when applicable) to reflect environment.
-3. Update `vars.tfvars` in each directory (when applicable) to reflect environment.
+2. Update `tstate.tf`  in each directory (when applicable).
+``` hcl
+terraform {
+  required_version = ">=1.5.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+}
+  backend "s3" {
+    bucket         = "ooc-us-gov-west-1-tf-state"
+    region         = "us-gov-west-1"
+    key            = "ooc-us-gov-west-1-networking.tfstate"
+    dynamodb_table = "ooc-us-gov-west-1-state-lock"
+    encrypt        = true
+  }
+}
+```
+
+3. Update `remote-data.tf`in each directory (when applicable).
+``` hcl
+data "terraform_remote_state" "day0" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.resource_prefix}-${var.aws_region}-tf-state"
+    region  = var.aws_region
+    key     = "${var.resource_prefix}-${var.aws_region}-tfsetup.tfstate"
+    profile = "ooc-mgmt"
+  }
+}
+```
+3. Update `vars.tfvars` in each directory (when applicable).
 
 ## Deployment Steps
 
@@ -39,6 +72,7 @@ Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 3. Navigate to `aws/terraform/us-gov-west-1/org-creation` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
 4. Navigate to `aws/terraform/us-gov-west-1/org-onboarding` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
 5. Navigate to `aws/terraform/us-gov-west-1/networking` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
+6. Navigate to `aws/terraform/us-gov-west-1/management-account/bastion` and run `terraform init` and `terraform plan`. If everything looks correct, then run `terraform apply`.
 
 ## Deployment Configurations
 

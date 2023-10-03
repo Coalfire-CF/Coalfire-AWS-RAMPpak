@@ -1,6 +1,6 @@
 # Bastion
 
-Deploy a windows server in boundary to access the management and application infrastructure.
+Deploy a Windows server in boundary to access the management and application infrastructure.
 
 ## Dependencies
 
@@ -18,7 +18,7 @@ Deploy a windows server in boundary to access the management and application inf
 - IAM instance profile
 - KMS RBAC grant
 - AWS Security Group
-- Target Group Attachment
+
 
 ## Code Updates
 
@@ -36,7 +36,7 @@ terraform {
   backend "s3" {
     bucket         = "pak-us-gov-west-1-tf-state"
     region         = "us-gov-west-1"
-    key            = "${var.location_abbreviation}-bastion.tfstate"
+    key            = "${var.resource_prefix}-${var.aws_region}-bastion.tfstate"
     dynamodb_table = "pak-us-gov-west-1-state-lock"
     encrypt        = true
   }
@@ -73,7 +73,7 @@ resource_prefix = "pak"
 aws_region = "us-gov-west-1"
 instance_name = "win_bastion"
 instance_size = "t3a.medium"
-key_name = "pak-test"
+key_name = "pak"
 instance_volume_size = 80
 associate_eip = true
 ```
@@ -95,7 +95,7 @@ associate_eip = true
 ```hcl
 data "aws_ami" "ami" {
   most_recent = true
-  owners      = ["ACCOUNT ID"]
+  owners      = ["077303321853"]
   provider    = aws.mgmt
 
   filter {
@@ -134,7 +134,7 @@ module "win_bastion" {
       protocol    = "tcp"
       from_port   = "3389"
       to_port     = "3389"
-      cidr_blocks = [data.terraform_remote_state.networking.outputs.mgmt_vpc_cidr]
+      cidr_blocks = [data.terraform_remote_state.networking.outputs.mgmt_vpc_cidr] #add your public IP to allow for external access as well
   }
   ]
 
@@ -149,6 +149,4 @@ module "win_bastion" {
   global_tags = {}
 
 }
-
-
 ```

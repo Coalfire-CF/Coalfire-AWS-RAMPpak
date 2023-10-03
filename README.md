@@ -1,7 +1,4 @@
-<div align="center">
-<img src="coalfire_logo.png" width="200">
-
-</div>
+![Coalfire](coalfire_logo.png)
 
 ## Coalfire AWS RAMPpak
 
@@ -9,6 +6,10 @@
 Coalfire created reference architecture for FedRAMP AWS builds. This repository is used as a parent directory to deploy Coalfire-CF/`terraform-aws-<service>` modules.
 
 Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
+
+## Architecture
+
+![Coalfire-AWS-RAMPpak](Coalfire-AWS-RAMPpak.png)
 
 ## Dependencies
 

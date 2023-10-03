@@ -39,14 +39,12 @@ module "win_bastion" {
       protocol    = "tcp"
       from_port   = "3389"
       to_port     = "3389"
-      cidr_blocks = [data.terraform_remote_state.networking.outputs.mgmt_vpc_cidr,
-      "71.86.1.8/29"]
+      cidr_blocks = [data.terraform_remote_state.networking.outputs.mgmt_vpc_cidr]
   },{
       protocol    = "tcp"
       from_port   = "5985"
       to_port     = "5986"
-      cidr_blocks = [data.terraform_remote_state.networking.outputs.mgmt_vpc_cidr,
-      "71.86.1.8/29"]
+      cidr_blocks = [data.terraform_remote_state.networking.outputs.mgmt_vpc_cidr]
   }
   ]
 
@@ -62,18 +60,3 @@ module "win_bastion" {
 
 }
 
-data "aws_ami" "not-stig-ami" {
-  most_recent = true
-  owners      = ["077303321853"]
-  provider    = aws.mgmt
-
-  filter {
-    name   = "name"
-    values = ["Windows_Server-2019-English-Full-Base-20*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}

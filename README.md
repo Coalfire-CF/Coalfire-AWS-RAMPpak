@@ -1,7 +1,4 @@
-<div align="center">
-<img src="coalfire_logo.png" width="200">
-
-</div>
+![Coalfire](coalfire_logo.png)
 
 ## Coalfire AWS RAMPpak
 
@@ -11,7 +8,9 @@ Coalfire created reference architecture for FedRAMP AWS builds. This repository 
 
 Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 
-[Get our SSP Templates and Reference Architecture Design Document Template](https://www.coalfire.com/services/fedramp/ramp-pak-documentation)
+## Architecture
+
+![Coalfire-AWS-RAMPpak](Coalfire-AWS-RAMPpak.png)
 
 ## Dependencies
 

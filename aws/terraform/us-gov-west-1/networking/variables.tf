@@ -10,7 +10,6 @@ variable "resource_prefix" {
 
 variable "deploy_aws_nfw" {
   description = "enable nfw true/false"
-  default = true
 }
 
 variable "aws_region" {

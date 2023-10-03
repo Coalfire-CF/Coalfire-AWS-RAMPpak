@@ -1,4 +1,0 @@
----
-# Tests that the services the application relies on are running
-- name: Service check
-  ansible.builtin.include_tasks: service_check.yml

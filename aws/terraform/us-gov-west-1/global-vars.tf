@@ -3,23 +3,6 @@ data "aws_caller_identity" "mgmt_account" {
   provider = aws.mgmt
 }
 
-data "aws_partition" "current" {}
-
-
-# data "aws_caller_identity" "app1_account" {
-#   # Get the app1 account ID
-#   provider = aws.app1
-# }
-
-# data "aws_caller_identity" "app2_account" {
-#   # Get the app2 account ID
-#   provider = aws.app2
-# }
-
-
-locals {
-}
-
 variable "resource_prefix" {
   type        = string
   default     = "ooc"

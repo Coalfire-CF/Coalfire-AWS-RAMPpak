@@ -1,4 +1,0 @@
----
-
-- name: "SECTION | 3.x"
-  import_tasks: cis_3.x.yml

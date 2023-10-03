@@ -1,9 +1,0 @@
-## Ansible controlled file
-# Added as part of ansible-lockdown CIS baseline
-# provided by MindPointGroup LLC
-
-NTP={{ ubtu22cis_time_pool }}
-
-
-FallbackNTP={% for servers in ubtu22cis_time_servers %}{{ servers.name }} {% endfor %}
-

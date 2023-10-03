@@ -1,6 +1,0 @@
----
-# vars file for UBUNTU18-CIS
-
-# Used to control warning summary
-warn_control_list: ""
-warn_count: 0

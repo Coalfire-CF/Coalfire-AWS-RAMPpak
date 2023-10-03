@@ -58,7 +58,6 @@ output "rds_kms_key_id" {
   value = module.account-setup.rds_kms_key_id[0]
 }
 
-
 output "cloudwatch_kms_key_arn" {
   value = module.account-setup.cloudwatch_kms_key_arn[0]
 }

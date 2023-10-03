@@ -1,7 +1,7 @@
-# DAY 0 Deployment Management Account 
+# Networking Deployment Management Account 
 
 ## Description
-This module includes the networking setup, including VPC provisions, Subnet creation and provisions, AWS network firewall policies, and other various network components.
+This module includes the networking setup, including VPC provisions, Subnet creation and provisions, AWS network firewall resources and policies, and other various network components.
 
 FedRAMP Compliance: Moderate, High
 
@@ -19,9 +19,37 @@ A high-level list of resources created as a part of this module.
   - Private
   - Firewall
   - Compute
+- NAT Gateways
+- Internet Gateways
+- AWS Network Firewall
+- AWS Network Firewall Policies
+- Cloudwatch Logs
+- VPC Flow Logs
 - IAM Roles
 - IAM Policies
 - KMS Keys
+
+## Code Updates
+
+`tstate.tf` Update to the appropriate version and storage accounts, see sample
+``` hcl
+terraform {
+  required_version = ">=1.5.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+}
+  backend "s3" {
+    bucket         = "pak-us-gov-west-1-tf-state"
+    region         = "us-gov-west-1"
+    key            = "pak-us-gov-west-1-networking.tfstate"
+    dynamodb_table = "pak-us-gov-west-1-state-lock"
+    encrypt        = true
+  }
+}
+```
 
 ## tfvars Example
 ``` hcl
@@ -42,13 +70,13 @@ profile = "<customer-prefix>-mgmt"
 - If everything looks correct in the plan output, run `terraform apply`
 
 ``` hcl
-data "terraform_remote_state" "day0" {
+data "terraform_remote_state" "networking" {
   backend = "s3"
 
   config = {
     bucket  = "pak-us-gov-west-1-tf-state"
     region  = var.aws_region
-    key     = "pak-us-gov-west-1-tfsetup.tfstate"
+    key     = "pak-us-gov-west-1-networking.tfstate"
     profile = "pak-mgmt"
   }
 }

@@ -1,8 +1,0 @@
-FROM {{ item.image }}
-ENV ANSIBLE_USER=ansible
-RUN set -xe && \
-  dnf install -y less openssl python3-cryptography sudo bind-utils iputils net-tools polkit && \
-  dnf clean all && \
-  groupadd -r ${ANSIBLE_USER} && \
-  useradd -m -g ${ANSIBLE_USER} ${ANSIBLE_USER} && \
-  echo "${ANSIBLE_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/${ANSIBLE_USER}

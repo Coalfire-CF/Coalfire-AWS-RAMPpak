@@ -11,10 +11,6 @@ module "nfw_kms_key" {
 data "aws_iam_policy_document" "nfw_kms_policy" {
   provider = aws.mgmt
 
-  #checkov:skip=CKV_AWS_109: "Ensure IAM policies does not allow permissions management / resource exposure without constraints"
-  #checkov:skip=CKV_AWS_111: "Ensure IAM policies does not allow write access without constraints"
-  # https://docs.aws.amazon.com/network-firewall/latest/developerguide/kms-encryption-at-rest.html
-
   statement {
     sid     = "Enable IAM User Permissions"
     effect  = "Allow"

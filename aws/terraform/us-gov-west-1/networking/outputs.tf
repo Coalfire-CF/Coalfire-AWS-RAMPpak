@@ -32,3 +32,8 @@ output "elasticache_subnets" {
   description = "subnet ids of deployed private subnets"
   value = module.mgmt_vpc.elasticache_subnets
 }
+
+output "mgmt_vpc_cidr"{
+  description = "mgmt vpc cidr block"
+  value = module.mgmt_vpc.vpc_cidr_block
+}

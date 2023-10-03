@@ -219,7 +219,7 @@ locals {
       capacity    = 1000
       name        = "SURICATARULES"
       description = "Stateful rules with suricta type"
-      rules_file  = "./test.rules.json"
+      rules_file  = "./nfw-suricata.rules.json"
     }
   ]
 

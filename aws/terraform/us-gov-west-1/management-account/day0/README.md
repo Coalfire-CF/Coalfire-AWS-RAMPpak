@@ -55,7 +55,7 @@ aws_region = "<aws-region>"
   - From in front of `backend "s3"` to the bracket associated with the end of the code block
 - Run `terraform init`
 - Run `terraform plan` to review the resources being created
-- If everything looks correct in the plan output, run `terraform apply -var-file ./tfvars/vars.tfvars`
+- If everything looks correct in the plan output, run `terraform apply -var-file vars.tfvars`
 
 ``` hcl
 data "terraform_remote_state" "day0" {

@@ -1,23 +1,25 @@
-# Organization Onboarding
+# DAY 0 Deployment Management Account 
 
 ## Description
-The organization onboarding module is responsible for joining the target AWS account to an organization.
+This module provisions the management account setup, including initial account confirguations, IAM roles, KMS keys, S3 bucket installs, etc.
 
 FedRAMP Compliance: High
 
 ## Dependencies
-- Account Initializaiton
-
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~>1.5.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
 
-## tfvars Example
-mgmt_role_arn    = "arn:aws-us-gov:iam::111111111111:role/tfadmin"
-mgmt_external_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx"
-org_role_arn     = "arn:aws-us-gov:iam::111111111111:role/tfadmin"
-org_external_id  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx"
+## Resource List
+A high-level list of resources created as a part of this module.
+- IAM Roles
+- IAM Policies
+- IAM instance profiles
+- KMS Keys
+- S3 buckets
+- Region Setup
+- Security Core Module Resources
 
 ## Code Updates
 
@@ -42,7 +44,6 @@ terraform {
 ```
 
 ## Deployment Steps
-- Update the `mgmt_*` and `org_*` variables (role ARN and external ID) prior to running
 - Change the working directory to the `management-account` directory
 - If you are running this directory for the first time, comment out the S3 backend in `tstate.tf`
   - From in front of `backend "s3"` to the bracket associated with the end of the code block

@@ -1,0 +1,11 @@
+name: Org Release
+on:
+    pull_request:
+        types:
+        - closed
+        branches:
+        - main
+
+jobs:
+  create-release:
+    uses: Coalfire-CF/Actions/.github/workflows/org-release.yml@main

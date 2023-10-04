@@ -1,0 +1,12 @@
+name: Org Checkov
+on:
+    pull_request:
+      paths:
+        - '**.tf'
+      branches:
+        - main
+    workflow_call:
+
+jobs:
+  check-markdown:
+    uses: Coalfire-CF/Actions/.github/workflows/org-checkov.yml@main

@@ -22,7 +22,6 @@ Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 | Directory | Purpose |
 | --------- | ------- |
 | `aws/terraform/us-gov-west-1/management-account/day0` | Account Setup Terraform files |
-| `aws/terraform/us-gov-west-1/management-account/rds` | RDS Database Terraform files |
 | `aws/terraform/us-gov-west-1/global-vars.tf` | Global variables |
 | `aws/terraform/us-gov-west-1/networking` | Networking deployment Terraform files |
 | `aws/terraform/us-gov-west-1/org-creation` | AWS Organization Terraform files |

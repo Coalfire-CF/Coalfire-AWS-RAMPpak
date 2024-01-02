@@ -5,7 +5,7 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-}
+  }
   backend "s3" {
     bucket         = "pak-us-gov-west-1-tf-state"
     region         = "us-gov-west-1"

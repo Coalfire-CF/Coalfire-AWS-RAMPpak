@@ -23,10 +23,10 @@ module "win_bastion" {
   ami               = data.aws_ami.ami.id
   ec2_instance_type = var.instance_size
   instance_count    = var.instance_count
-  associate_eip = var.associate_eip
+  associate_eip     = var.associate_eip
 
-  vpc_id = data.terraform_remote_state.networking.outputs.mgmt_vpc_id
-  subnet_ids = [ data.terraform_remote_state.networking.outputs.public_subnets[0]]
+  vpc_id          = data.terraform_remote_state.networking.outputs.mgmt_vpc_id
+  subnet_ids      = [data.terraform_remote_state.networking.outputs.public_subnets[0]]
   ec2_key_pair    = var.key_name
   ebs_kms_key_arn = data.terraform_remote_state.day0.outputs.ebs_kms_key_arn
 
@@ -40,7 +40,7 @@ module "win_bastion" {
       from_port   = "3389"
       to_port     = "3389"
       cidr_blocks = [data.terraform_remote_state.networking.outputs.mgmt_vpc_cidr]
-  }
+    }
   ]
 
   egress_rules = [{

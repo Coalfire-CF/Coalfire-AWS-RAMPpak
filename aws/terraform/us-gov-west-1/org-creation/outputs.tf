@@ -1,5 +1,5 @@
 output "accounts" {
-  value = module.org.accounts
+  value       = module.org.accounts
   description = "List of org accounts including master"
 }
 

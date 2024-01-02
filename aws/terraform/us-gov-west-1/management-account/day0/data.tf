@@ -9,7 +9,7 @@ data "aws_iam_policy_document" "eks_key" {
     actions   = ["kms:*"]
     resources = ["*"]
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [
         "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"
       ]

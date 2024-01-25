@@ -46,7 +46,7 @@ terraform {
 ## tfvars Example
 ``` hcl
 resource_prefix = "<customer-prefix>"
-aws_region = "<aws-region>"
+aws_region      = "<aws-region>"
 ```
 
 ## Deployment Steps

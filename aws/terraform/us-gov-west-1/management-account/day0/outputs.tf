@@ -98,6 +98,13 @@ output "s3_installs_id" {
   value = module.account-setup.s3_installs_id
 }
 
+output "s3_elb_access_logs_arn" {
+  value = module.account-setup.s3_elb_access_logs_arn
+}
+
+output "s3_elb_access_logs_id" {
+  value = module.account-setup.s3_elb_access_logs_id
+}
 
 output "dynamodb_table_name" {
   value = module.account-setup.dynamodb_table_name

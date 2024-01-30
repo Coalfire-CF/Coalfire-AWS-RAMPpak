@@ -122,7 +122,7 @@ module "win_bastion" {
   associate_eip     = var.associate_eip
 
   vpc_id          = data.terraform_remote_state.networking.outputs.mgmt_vpc_id
-  subnet_ids      = [ data.terraform_remote_state.networking.outputs.public_subnets["${var.resource_prefix}-public-1a"]]
+  subnet_ids      = [ data.terraform_remote_state.networking.outputs.public_subnets["pak-mgmt-public-us-gov-west-1a"]]
   ec2_key_pair    = var.key_name
   ebs_kms_key_arn = data.terraform_remote_state.day0.outputs.ebs_kms_key_arn
 

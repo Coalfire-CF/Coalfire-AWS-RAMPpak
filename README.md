@@ -3,8 +3,8 @@
 ## Coalfire AWS RAMPpak
 
 ## Description
-Coalfire created reference architecture for FedRAMP AWS builds. This repository is used as a parent directory to deploy Coalfire-CF/`terraform-aws-<service>` modules.
 
+Coalfire created reference architecture for FedRAMP AWS builds. This repository is used as a parent directory to deploy Coalfire-CF/`terraform-aws-<service>` modules.
 
 Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 
@@ -14,7 +14,7 @@ Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 
 ## Dependencies
 
-- AWS Account 
+- AWS Account
 - AWS CLI is installed
 
 ## Resource List
@@ -31,6 +31,7 @@ Learn more at [Coalfire OpenSource](https://coalfire.com/opensource).
 
 1. Update `global-vars.tf` in `aws/terraform/us-gov-west-1/global-vars.tf`
 2. Update `tstate.tf`  in each directory (when applicable). Example below:
+
 ``` hcl
 terraform {
   required_version = ">=1.5.0"
@@ -51,6 +52,7 @@ terraform {
 ```
 
 3. Update `remote-data.tf`in each directory (when applicable). Example below:
+
 ``` hcl
 data "terraform_remote_state" "day0" {
   backend = "s3"
@@ -63,6 +65,7 @@ data "terraform_remote_state" "day0" {
   }
 }
 ```
+
 3. Update `vars.tfvars` in each directory (when applicable).
 
 ## Deployment Steps
@@ -106,14 +109,12 @@ No outputs.
 
 ## Contributing
 
-If you're interested in contributing to our projects, please review the [Contributing Guidelines](CONTRIBUTING.md). And send an email to [our team](contributing@coalfire.com) to receive a copy of our CLA and start the onboarding process.
-
+If you're interested in contributing to our projects, please review the [Contributing Guidelines](CONTRIBUTING.md). And send an email to [our team](mailto:contributing@coalfire.com) to receive a copy of our CLA and start the onboarding process.
 
 ## License
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit/)
 
-
 ### Copyright
 
-Copyright © 2023 Coalfire Systems Inc.
+Copyright © 2024 Coalfire Systems Inc.

@@ -60,6 +60,15 @@ cidrs_for_remote_access = ["<Customer-IP>"]
 mgmt_vpc_cidr = "<Customer-Custom-CIDR-Range"
 profile = "<customer-prefix>-mgmt"
 ```
+## Assumptions
+
+* Networking resources, including VPCs, Transit Gateways and Network Firewalls, are designed to be deployed under a single state.
+* Outputs of this module can be referenced via terraform state in the following manner:
+  * `module.mgmt_vpc.private_subnets["mvp-mgmt-compute-us-gov-west-1a"]`
+  * `data.terraform_remote_state.network.outputs.public_subnets["mvp-mgmt-dmz-us-gov-west-1a"]`
+* This is designed to automatically reference the firewall subnets when opted to be created.
+* Automatically adds AWS region to the subnet name upon creation
+
 
 ## Deployment Steps
 1. Change the working directory the `networking` folder
